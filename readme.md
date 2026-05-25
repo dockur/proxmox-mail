@@ -61,7 +61,7 @@ docker run -it --rm --name proxmox --hostname proxmox -e "USERNAME=root" -e "PAS
   
   Enjoy your time with your brand new Proxmox installation, and don't forget to star this repo!
 
-### How do I verify if my system supports KVM?
+### How do I verify if my system supports the KVM virtualization used by Proxmox?
 
   First check if your software is compatible using this chart:
 
