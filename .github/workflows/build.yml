@@ -21,12 +21,41 @@ jobs:
       contents: read
     steps:
       -
+        name: Get remote package data
+        run: |
+          set -e -o pipefail
+          latest_tag=$(curl -fsSL http://download.proxmox.com/debian/pve/dists/trixie/pve-no-subscription/binary-amd64/Packages.gz \
+          | gzip -dc | awk '$1=="Package:" && $2=="proxmox-ve"{f=1} f && $1=="Version:"{print $2; exit}')
+          echo "Found tag: \"${latest_tag}\"" 
+          latest_version="${latest_tag%-*}"
+          major="${latest_version%%.*}"
+          minor="${latest_version#*.}"
+          minor="${minor%%.*}"
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
+          echo "latest_minor=$major.$minor" >> $GITHUB_ENV
+          echo "latest_major=$major" >> $GITHUB_ENV
+      - 
+        name: Check if the tag exists locally
+        uses: action-pack/tag-exists@v1
+        id: checkTag
+        with: 
+          tag: 'v${{ env.latest_tag }}'         
+      -
+        name: Finish when found
+        run: |
+          #!/bin/bash
+          val="${{ steps.checkTag.outputs.exists }}"
+          echo "exists=${val}" >> $GITHUB_ENV
+      -
         name: Checkout
+        if: env.exists == 'false'
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
       -
         name: Docker metadata
+        if: env.exists == 'false'
         id: meta
         uses: docker/metadata-action@v6
         with:
@@ -36,22 +65,27 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,priority=100
-            type=raw,value=${{ vars.MAJOR }}.${{ vars.MINOR }}
+            type=raw,value=${{ env.latest_major }},priority=450
+            type=raw,value=${{ env.latest_minor }},priority=350
+            type=raw,value=${{ env.latest_version }},priority=250
           labels: |
             org.opencontainers.image.title=${{ vars.NAME }}
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - 
         name: Set up Docker Buildx
+        if: env.exists == 'false'
         uses: docker/setup-buildx-action@v4
       -
         name: Login into Docker Hub
+        if: env.exists == 'false'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Login to GitHub Container Registry
+        if: env.exists == 'false'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -59,6 +93,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build Docker image
+        if: env.exists == 'false'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -72,15 +107,11 @@ jobs:
             VERSION_ARG=${{ steps.meta.outputs.version }}
       -
         name: Create a release
+        if: env.exists == 'false'
         uses: action-pack/github-release@v2
         with:
           tag: "v${{ steps.meta.outputs.version }}"
           title: "v${{ steps.meta.outputs.version }}"
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-      -
-        name: Increment version variable
-        uses: action-pack/bump@v2
-        with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       -
         name: Send mail
