@@ -42,7 +42,6 @@ if [ ! -c /dev/fuse ]; then
 fi
 
 # Check KVM support
-
 KVM_ERR=""
 
 if [ ! -e /dev/kvm ]; then
@@ -66,13 +65,18 @@ fi
 # Update username and password
 printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
 
-#for i in $(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//'); do
-#  if ! grep -qE "^iface[[:space:]]+$i[[:space:]]" /etc/network/interfaces; then
-#    echo -e "auto $i\niface $i inet manual\n" >> /etc/network/interfaces
-#  fi
-#done
+# Automaticly add network interfaces
+ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//' | while IFS= read -r i; do
+
+  iface=$(printf '%s' "$i" | sed 's/[][\/.^$*+?(){}|]/\\&/g')
+
+  if ! grep -qE "^iface[[:space:]]+$iface[[:space:]]" /etc/network/interfaces; then
+    printf 'auto %s\niface %s inet manual\n\n' "$i" "$i" >> /etc/network/interfaces
+  fi
+
+done
 
 cat /etc/network/interfaces
 sleep 10
 
-exec /usr/sbin/init 3
+exec /sbin/init 3
