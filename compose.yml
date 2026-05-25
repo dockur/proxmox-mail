@@ -1,6 +1,6 @@
 services:
   proxmox:
-    hostname: proxmox
+    hostname: pve
     image: dockurr/proxmox
     container_name: proxmox
     environment:
