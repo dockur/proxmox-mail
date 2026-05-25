@@ -77,9 +77,6 @@ if grep -qE '^[[:space:]]*ConditionVirtualization' "$file"; then
 
 fi
 
-cat "$file"
-sleep 20
-
 # Automaticly add network interfaces
 file="/etc/network/interfaces"
 
@@ -92,6 +89,5 @@ ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//' | while I
   fi
 
 done
-cat "$file"
-sleep 20
+
 exec /sbin/init 3
