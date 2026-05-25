@@ -79,16 +79,51 @@ if grep -qE '^[[:space:]]*ConditionVirtualization' "$file"; then
 fi
 
 # Automaticly add network interfaces
-file="/etc/network/interfaces"
+file="/tmp/interfaces.tmp"
+rm -f "$file"
+
+echo "auto lo" > "$file"
+echo "iface lo inet loopback" >> "$file"
+echo "" > "$file"
 
 ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//' | while IFS= read -r i; do
-
-  iface=$(printf '%s' "$i" | sed 's/[][\/.^$*+?(){}|]/\\&/g')
-
-  if ! grep -qE "^iface[[:space:]]+$iface[[:space:]]" "$file"; then
-    printf 'auto %s\niface %s inet manual\n\n' "$i" "$i" >> "$file"
-  fi
+  
+  printf 'auto %s\niface %s inet manual\n\n' "$i" "$i" >> "$file"
 
 done
+
+NET_DEV=""
+
+# Give Kubernetes priority over the default interface
+[ -d "/sys/class/net/net0" ] && NET_DEV="net0"
+[ -d "/sys/class/net/net1" ] && NET_DEV="net1"
+[ -d "/sys/class/net/net2" ] && NET_DEV="net2"
+[ -d "/sys/class/net/net3" ] && NET_DEV="net3"
+
+# Automatically detect the default network interface
+[ -z "$NET_DEV" ] && NET_DEV=$(awk '$2 == 00000000 { print $1 }' /proc/net/route)
+[ -z "$NET_DEV" ] && NET_DEV="eth0"
+
+if [ ! -d "/sys/class/net/$NET_DEV" ]; then
+  error "Network interface '$NET_DEV' does not exist inside the container!" && exit 26
+fi
+
+# Detect IP address
+{ IP=$(ip address show dev "$NET_DEV" | grep inet | awk '/inet / { print $2 }' | cut -f1 -d/ | head -n 1); rc=$?; } 2>/dev/null || :
+
+if (( rc != 0 )); then
+  error "Could not determine container IP address!" && exit 27
+fi
+
+# Create bridge 
+echo "auto vmbr0" >> "$file"
+echo "iface vmbr0 inet static" >> "$file"
+echo "        address ${IP%.*}.0/24" >> "$file"
+echo "        gateway ${IP%.*}.1" >> "$file"
+echo "        bridge-ports $NET_DEV" >> "$file"
+echo "        bridge-stp off" >> "$file"
+echo "        bridge-fd 0" >> "$file"
+
+mv "$file" /etc/network/interfaces
 
 exec /sbin/init 3
