@@ -63,7 +63,7 @@ if [ -n "$KVM_ERR" ]; then
 fi
 
 # Update username and password
-usermod -u 0 "$USERNAME"
+usermod -u 0 "$USERNAME" >/dev/null
 printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
 
 # Modify setting for LXC containers
@@ -84,7 +84,7 @@ rm -f "$file"
 
 echo "auto lo" > "$file"
 echo "iface lo inet loopback" >> "$file"
-echo "" > "$file"
+echo "" >> "$file"
 
 ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//' | while IFS= read -r i; do
   
@@ -124,6 +124,7 @@ echo "        bridge-ports $NET_DEV" >> "$file"
 echo "        bridge-stp off" >> "$file"
 echo "        bridge-fd 0" >> "$file"
 
-mv "$file" /etc/network/interfaces
+cp "$file" /etc/network/interfaces
+cat /etc/network/interfaces
 
 exec /sbin/init 3
