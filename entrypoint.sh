@@ -84,7 +84,7 @@ echo "" >> "$file"
 
 ip -o link show | awk -F': ' '{print $2}' | grep -v lo | sed 's/@.*//' | while IFS= read -r i; do
   
-  printf 'auto %s\niface %s inet manual\n\n' "$i" "$i" >> "$file"
+  printf 'auto %s\niface %s inet dhcp\n\n' "$i" "$i" >> "$file"
 
 done
 
