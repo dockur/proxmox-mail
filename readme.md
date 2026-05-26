@@ -48,10 +48,14 @@ docker run -it --rm --name proxmox --hostname pve -e "PASSWORD=root" -p 8006:800
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dockur/proxmox)
 
-## Screenshot 📸
+## Screenshots 📸
 
 <div align="center">
 <a href="https://github.com/dockur/proxmox"><img src="https://raw.githubusercontent.com/dockur/proxmox/master/.github/screenshot.png" title="Screenshot" style="max-width:100%;" width="256" /></a>
+</div>
+
+<div align="center">
+<a href="https://github.com/dockur/proxmox"><img src="https://raw.githubusercontent.com/dockur/proxmox/master/.github/screenshot2.png" title="Screenshot" style="max-width:100%;" width="256" /></a>
 </div>
 
 ## FAQ 💬
