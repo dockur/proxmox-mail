@@ -75,7 +75,7 @@ docker run -it --rm --name proxmox --hostname pve -e "USERNAME=root" -e "PASSWOR
 
   - Attach the `docker0` bridge to your virtual machine, start that machine and view its screen.
  
-  - Configure the OS for a static IP instead of DHCP, and pick one inside the subnet of the `docker0` bridge.
+  - Configure the OS for a static IP instead of DHCP, and pick a fixed address inside the subnet of the `docker0` bridge.
    
     Preferably one starting from a value of `.100`, for example `172.0.11.100`.
 
