@@ -58,13 +58,6 @@ Components: ${COMPONENT}
 Signed-By: ${KEY_PATH}
 SOURCES
 
-# Block unneeded packages in container
-cat > /etc/apt/preferences.d/99-pve-unneeded-packages <<PKG
-Package: proxmox-default-kernel proxmox-kernel-* pve-firmware
-Pin: release *
-Pin-Priority: -1
-PKG
-
 # Prevent services from starting during install
 printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
@@ -82,7 +75,7 @@ printf '#!/bin/sh\nexit 0\n' > /usr/sbin/ifreload
 chmod +x /usr/sbin/ifreload
 printf '#!/bin/sh\nexit 0\n' > /usr/local/sbin/systemctl
 chmod +x /usr/local/sbin/systemctl
-    
+
 # pve-manager postinst copies this file — pre-create it so the cp doesn't fail
 mkdir -p /usr/share/doc/pve-manager
 touch /usr/share/doc/pve-manager/aplinfo.dat
@@ -114,7 +107,7 @@ rm -f /etc/apt/sources.list.d/pve-enterprise.list \
       /etc/apt/sources.list.d/ceph.list \
       /etc/apt/sources.list.d/ceph.sources
 
-# Cleanup
+# Cleanup Find all installed packages starting with proxmox-kernel-
 apt-get remove -y os-prober >/dev/null
 apt-get autoremove -y
 apt-get clean
@@ -139,29 +132,21 @@ rm -rf /root/.gnupg
 # Configure LXC
 sed -i 's/^ConditionVirtualization=!container/#&/' /lib/systemd/system/lxcfs.service
 
-cat > /etc/rc.local <<'RCLOCAL'
-
 # Add loop devices for LXC
-modprobe loop
-for i in $(seq 0 30); do
-  if [ ! -e /dev/loop$i ]; then
-    mknod -m 0660 /dev/loop$i b 7 $i
-  fi
-done
-
-RCLOCAL
+echo "modprobe loop" >> /etc/rc.local
+echo "for i in \$(seq 0 30); do" >> /etc/rc.local
+echo "  if [ ! -e /dev/loop\$i ]; then" >> /etc/rc.local
+echo "    mknod -m 0660 /dev/loop\$i b 7 \$i" >> /etc/rc.local
+echo "  fi" >> /etc/rc.local
+echo "done" >> /etc/rc.local
 
 if [ "$TARGETARCH" = "arm64" ]; then
 
-  cat >> /etc/rc.local <<'RCLOCAL_ARM'
-
   # Update arm64 LXC template
-  pveam update 2>/dev/null
+  echo "pveam update 2>/dev/null" >> /etc/rc.local
 
   # Remove unsupported amd64 turnkeylinux repo
-  rm -f /var/lib/pve-manager/apl-info/releases.turnkeylinux.org
-  RCLOCAL_ARM
-
+  echo "rm -f /var/lib/pve-manager/apl-info/releases.turnkeylinux.org" >> /etc/rc.local
 fi
 
 echo "" >> /etc/rc.local
@@ -186,11 +171,11 @@ rm -f \
   /usr/lib/x86_64-linux-gnu/libavfilter.so* \
   /usr/lib/x86_64-linux-gnu/libSvtAv1Enc.so* \
   /usr/lib/x86_64-linux-gnu/libplacebo.so*
-  
+
 rm -rf \
   /usr/lib/x86_64-linux-gnu/dri \
   /usr/lib/x86_64-linux-gnu/gstreamer-1.0
-  
+
 # Remove share assets not needed at runtime
 rm -rf \
   /usr/share/pocketsphinx \
@@ -202,7 +187,7 @@ rm -rf \
   /usr/share/mime \
   /usr/share/doc \
   /usr/share/man
-  
+
 # Set username and password
 echo "root:root" | chpasswd
 
@@ -211,6 +196,8 @@ echo "$VERSION_ARG" > /run/version
 
 # Cleanup files
 rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
+
+EOF
 
 COPY --chmod=755 ./entrypoint.sh /run/
 
