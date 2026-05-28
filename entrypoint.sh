@@ -19,26 +19,8 @@ info "Starting Proxmox for Docker v$(</run/version)..."
 info "For support visit https://github.com/dockur/proxmox"
 echo ""
 
-# Remount paths as read-write
-mount -o remount,rw /sys/fs/cgroup 2>/dev/null
-mount -o remount,rw /proc/sys 2>/dev/null
-mount -o remount,rw /sys 2>/dev/null
-
 # Set shm size to 1G to prevent cluster joining issue
 mount -o remount,size=1G /dev/shm
-
-# Add device nodes needed by PVE
-mkdir -p /dev/net /dev/mapper
-mknod /dev/kvm            c 10 232
-mknod /dev/fuse           c 10 229
-mknod /dev/net/tun        c 10 200
-mknod /dev/loop-control   c 10 237
-mknod /dev/mapper/control c 10 236
-chown root:kvm  /dev/kvm
-chown root:disk /dev/loop-control
-chmod 666 /dev/kvm /dev/zfs
-chmod 660 /dev/loop-control
-chmod 600 /dev/mapper/control
 
 # Update password for root
 printf 'root:%s\n' "$PASSWORD" | chpasswd
@@ -111,7 +93,12 @@ else
   fi
 
   # Determine container name
-  cid=$(grep -oE '[0-9a-f]{64}' /proc/self/cgroup | head -n1)
+  if grep -oE '[0-9a-f]{64}' /proc/self/cgroup; then
+    cid=$(grep -oE '[0-9a-f]{64}' /proc/self/cgroup | head -n1)
+  else
+    cid=$(grep -m1 "containers" /proc/self/mountinfo | sed -E 's#.*/containers/([^/]+)/.*#\1#')
+  fi
+
   target=$(docker inspect -f '{{.Name}}' "$cid" | sed 's#^/##')
 
   # Check if container name is valid
@@ -182,5 +169,4 @@ else
 
 fi
 
-# Boot systemd
-exec /sbin/init 3
+exec "$@"
