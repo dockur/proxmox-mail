@@ -13,8 +13,6 @@
 
 Proxmox VE inside a Docker container.
 
-Learn, test, break, and repeat.
-
 ## Features ✨
 
 - **Fast iteration** — Spin up, tear down, repeat in seconds
