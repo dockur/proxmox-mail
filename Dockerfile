@@ -24,14 +24,9 @@ apt-get update
 apt-get --no-install-recommends -y install \
   jq \
   curl \
-  gnupg \
   ca-certificates
 apt-get clean
 rm -rf /var/lib/apt/lists/*
-
-# Add Docker archive keyring
-curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian trixie stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # Add Proxmox archive keyring
 if [ "${TARGETARCH}" = "amd64" ]; then
@@ -81,7 +76,12 @@ mkdir -p /usr/share/doc/pve-manager
 touch /usr/share/doc/pve-manager/aplinfo.dat
 
 # Pin ifupdown2 to the Proxmox repo — pve-manager checks for their patched version
-printf 'Package: ifupdown2\nPin: origin download.proxmox.com\nPin-Priority: 1001\n' > /etc/apt/preferences.d/proxmox-ifupdown2
+if [[ "${TARGETARCH}" != "arm64" ]]; then
+  PVE_ORIGIN="download.proxmox.com"
+else
+  PVE_ORIGIN="mirrors.lierfang.com"
+fi
+printf 'Package: ifupdown2\nPin: origin %s\nPin-Priority: 1001\n' "$PVE_ORIGIN" > /etc/apt/preferences.d/proxmox-ifupdown2
 
 # Update system and install Proxmox VE
 apt-get update
@@ -89,17 +89,18 @@ apt-get full-upgrade -y
 apt-get install -y --no-install-recommends \
   nano \
   wget \
+  gnupg \
   procps \
   chrony \
   postfix \
-  proxmox-ve \
-  open-iscsi \
   ethtool \
   dnsmasq \
+  iptables \
   iproute2 \
   net-tools \
-  iputils-ping \
-  docker-ce-cli
+  proxmox-ve \
+  open-iscsi \
+  iputils-ping
 
 # Remove enterprise repo added by Proxmox packages — keep only no-subscription
 rm -f /etc/apt/sources.list.d/pve-enterprise.list \
@@ -107,13 +108,14 @@ rm -f /etc/apt/sources.list.d/pve-enterprise.list \
       /etc/apt/sources.list.d/ceph.list \
       /etc/apt/sources.list.d/ceph.sources
 
-# Cleanup Find all installed packages starting with proxmox-kernel-
+# Cleanup
 apt-get remove -y os-prober >/dev/null
 apt-get autoremove -y
 apt-get clean
 
 # Mask unneeded services
-systemctl mask systemd-networkd-wait-online.service watchdog-mux.service
+ln -sf /dev/null /etc/systemd/system/watchdog-mux.service
+ln -sf /dev/null /etc/systemd/system/systemd-networkd-wait-online.service
 
 # Add keyring for pveam
 gpg --keyserver keyserver.ubuntu.com --recv-keys \
@@ -140,20 +142,20 @@ rm -rf /usr/lib/firmware
 
 # Remove GPU/display/media libs — no display server, no GPU passthrough needed
 rm -f \
-  /usr/lib/x86_64-linux-gnu/libLLVM*.so* \
-  /usr/lib/x86_64-linux-gnu/libgallium*.so* \
-  /usr/lib/x86_64-linux-gnu/libvulkan_*.so* \
-  /usr/lib/x86_64-linux-gnu/libz3.so* \
-  /usr/lib/x86_64-linux-gnu/libx265.so* \
-  /usr/lib/x86_64-linux-gnu/libcodec2.so* \
-  /usr/lib/x86_64-linux-gnu/libavcodec.so* \
-  /usr/lib/x86_64-linux-gnu/libavfilter.so* \
-  /usr/lib/x86_64-linux-gnu/libSvtAv1Enc.so* \
-  /usr/lib/x86_64-linux-gnu/libplacebo.so*
+  /usr/lib/*/libLLVM*.so* \
+  /usr/lib/*/libgallium*.so* \
+  /usr/lib/*/libvulkan_*.so* \
+  /usr/lib/*/libz3.so* \
+  /usr/lib/*/libx265.so* \
+  /usr/lib/*/libcodec2.so* \
+  /usr/lib/*/libavcodec.so* \
+  /usr/lib/*/libavfilter.so* \
+  /usr/lib/*/libSvtAv1Enc.so* \
+  /usr/lib/*/libplacebo.so*
 
 rm -rf \
-  /usr/lib/x86_64-linux-gnu/dri \
-  /usr/lib/x86_64-linux-gnu/gstreamer-1.0
+  /usr/lib/*/dri \
+  /usr/lib/*/gstreamer-1.0
 
 # Remove share assets not needed at runtime
 rm -rf \
@@ -164,32 +166,33 @@ rm -rf \
   /usr/share/grub \
   /usr/share/groff \
   /usr/share/mime \
-  /usr/share/doc \
   /usr/share/man
 
 # Set username and password
 echo "root:root" | chpasswd
 
 # Store version number
-echo "$VERSION_ARG" > /run/version
+echo "$VERSION_ARG" > /usr/local/bin/version
 
 # Cleanup files
+rm /usr/local/sbin/systemctl
 rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
 
 EOF
 
-COPY --chmod=755 ./entrypoint.sh /run/
+WORKDIR /usr/local/bin
+COPY --chmod=755 ./src /usr/local/bin/
 
 ENV PASSWORD="root"
 
 EXPOSE 8006
-STOPSIGNAL SIGRTMIN+3
 
 VOLUME /var/lib/vz
 VOLUME /var/lib/pve-cluster
 
+STOPSIGNAL SIGRTMIN+3
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -kLfSs http://localhost:8006 >/dev/null || exit 1
 
-ENTRYPOINT ["/run/entrypoint.sh"]
-CMD ["/sbin/init", "--log-target=console", "--log-level=info"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/sbin/init", "--log-target=console", "--log-level=warning"]
