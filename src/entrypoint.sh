@@ -16,7 +16,7 @@ warn () { printf "%b%s%b" "\E[1;31m❯ " "Warning: ${1:-}" "\E[0m\n" >&2; }
 [ ! -f "/usr/local/bin/entrypoint.sh" ] && error "Script must be run inside the container!" && exit 12
 
 # Display version number
-info "Starting Proxmox for Docker v$(</usr/local/bin/version)..."
+info "Starting Proxmox for Docker v$(</etc/version)..."
 info "For support visit https://github.com/dockur/proxmox"
 echo ""
 
