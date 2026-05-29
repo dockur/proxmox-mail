@@ -29,13 +29,13 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 
 # Add Proxmox archive keyring
-if [ "${TARGETARCH}" = "amd64" ]; then
+if [[ "$TARGETARCH" == "amd64" ]]; then
   KEY_URL="https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg"
   KEY_PATH="/usr/share/keyrings/proxmox-archive-keyring.gpg"
   URI="http://download.proxmox.com/debian/pve"
   SUITE="trixie"
   COMPONENT="pve-no-subscription"
-elif [ "${TARGETARCH}" = "arm64" ]; then
+elif [[ "$TARGETARCH" == "arm64" ]]; then
   KEY_URL="https://mirrors.lierfang.com/pxcloud/lierfang.gpg"
   KEY_PATH="/etc/apt/trusted.gpg.d/lierfang.gpg"
   URI="https://mirrors.lierfang.com/pxcloud/pxvirt"
@@ -76,7 +76,7 @@ mkdir -p /usr/share/doc/pve-manager
 touch /usr/share/doc/pve-manager/aplinfo.dat
 
 # Pin ifupdown2 to the Proxmox repo — pve-manager checks for their patched version
-if [[ "${TARGETARCH}" != "arm64" ]]; then
+if [[ "$TARGETARCH" == "amd64" ]]; then
   PVE_ORIGIN="download.proxmox.com"
 else
   PVE_ORIGIN="mirrors.lierfang.com"
@@ -90,6 +90,7 @@ apt-get install -y --no-install-recommends \
   nano \
   wget \
   gnupg \
+  sudo \
   procps \
   chrony \
   postfix \
@@ -108,8 +109,18 @@ rm -f /etc/apt/sources.list.d/pve-enterprise.list \
       /etc/apt/sources.list.d/ceph.list \
       /etc/apt/sources.list.d/ceph.sources
 
+# Disable subscription nag popup
+if [[ "$TARGETARCH" == "amd64" ]]; then
+  wget https://github.com/Jamesits/pve-fake-subscription/releases/download/v0.0.11/pve-fake-subscription_0.0.11+git-1_all.deb -O /tmp/sub.deb -q --timeout=10
+  apt-get install -y --no-install-recommends ./tmp/sub.deb && rm -f /tmp/sub.deb
+fi
+
+# Prevent system updates
+apt-mark hold proxmox-ve
+
 # Cleanup
-apt-get remove -y os-prober >/dev/null
+export SUDO_FORCE_REMOVE=yes
+apt-get remove -y sudo os-prober
 apt-get autoremove -y
 apt-get clean
 
