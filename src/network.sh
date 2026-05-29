@@ -271,7 +271,7 @@ getInfo() {
     [ -d "/sys/class/net/net2" ] && DEV="net2"
     [ -d "/sys/class/net/net3" ] && DEV="net3"
     # Automatically detect the default network interface
-    [ -z "$DEV" ] && DEV=$(awk '$2 == 00000000 { print $1 }' /proc/net/route)
+    [ -z "$VM_NET_DEV" ] && VM_NET_DEV=$(awk '$2 == 00000000 { print $1; exit }' /proc/net/route)
     [ -z "$DEV" ] && DEV="eth0"
   fi
 
@@ -281,11 +281,8 @@ getInfo() {
   fi
 
   GATEWAY=$(ip route list dev "$DEV" | awk ' /^default/ {print $3}' | head -n 1)
-  { IP=$(ip address show dev "$DEV" | grep inet | awk '/inet / { print $2 }' | cut -f1 -d/ | head -n 1); rc=$?; } 2>/dev/null || :
-
-  if [ -z "$IP" ] || (( rc != 0 )); then
-    error "Could not determine container IPv4 address!" && exit 26
-  fi
+  { IP=$(ip address show dev "$DEV" | grep inet | awk '/inet / { print $2 }' | cut -f1 -d/ | head -n 1); } 2>/dev/null || :
+  [ -z "$IP" ] && error "Could not determine container IPv4 address!" && exit 26
 
   IP6=""
   # shellcheck disable=SC2143
