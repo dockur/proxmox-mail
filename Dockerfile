@@ -113,6 +113,7 @@ ln -sf /dev/null /etc/systemd/system/systemd-modules-load.service
 ln -sf /dev/null /etc/systemd/system/systemd-networkd-wait-online.service
 
 # Config journald
+mkdir -p /etc/systemd/journald.conf.d
 echo "[Journal]\nRuntimeMaxUse=500M" > /etc/systemd/journald.conf.d/container.conf
 
 # Disable keyboard request target (for Docker TTY)
