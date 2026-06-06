@@ -82,7 +82,7 @@ volumes:
   - ./pdm:/var/lib/proxmox-datacenter-manager
   ```
 
-  Replace the example paths `./pdm` and `./config` with the desired storage folders or named volumes.
+  Replace the example paths `./config` and `./pdm` with the desired storage folders or named volumes.
 
 ### Is there also Proxmox VE in a container?
 
