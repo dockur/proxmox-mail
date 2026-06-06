@@ -38,7 +38,7 @@ services:
       - 8443:8443
     volumes:
       - ./config:/etc/proxmox-datacenter-manager
-      - ./pdm:/var/lib/proxmox-datacenter-manager
+      - ./data:/var/lib/proxmox-datacenter-manager
     restart: always
     privileged: true
     stop_grace_period: 2m
@@ -47,7 +47,7 @@ services:
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/pdm:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
+docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
 ```
 
 ##### Via Github Codespaces:
@@ -79,10 +79,10 @@ docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p
   ```yaml
 volumes:
   - ./config:/etc/proxmox-datacenter-manager
-  - ./pdm:/var/lib/proxmox-datacenter-manager
+  - ./data:/var/lib/proxmox-datacenter-manager
   ```
 
-  Replace the example paths `./config` and `./pdm` with the desired storage folders or named volumes.
+  Replace the example paths `./config` and `./data` with the desired folders or named volumes.
 
 ### Is there also Proxmox VE in a container?
 
