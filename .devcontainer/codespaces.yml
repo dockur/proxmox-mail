@@ -1,15 +1,15 @@
 services:
-  proxmox:
-    hostname: pve
-    image: dockurr/proxmox
-    container_name: proxmox
+  pdm:
+    hostname: pdm
+    container_name: pdm
+    image: dockurr/proxmox-dm
     environment:
       PASSWORD: "root"
     ports:
-      - 8006:8006
+      - 8443:8443
     volumes:
-      - ./storage:/var/lib/vz
-      - ./config:/var/lib/pve-cluster
+      - ./config:/etc/proxmox-datacenter-manager
+      - ./pdm:/var/lib/proxmox-datacenter-manager
+    restart: always
     privileged: true
-    restart: on-failure
     stop_grace_period: 2m
