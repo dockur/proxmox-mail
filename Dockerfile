@@ -120,7 +120,10 @@ ln -sf /dev/null /etc/systemd/system/systemd-udevd-kernel.socket
 ln -sf /dev/null /etc/systemd/system/systemd-udevd-control.socket
 ln -sf /dev/null /etc/systemd/system/systemd-modules-load.service
 ln -sf /dev/null /etc/systemd/system/systemd-networkd-wait-online.service
-    
+
+# Config journald
+echo "[Journal]\nRuntimeMaxUse=500M" > /etc/systemd/journald.conf.d/container.conf
+
 # Disable keyboard request target (for Docker TTY)
 cat >/etc/systemd/system/kbrequest.target <<KBR
 [Unit]
