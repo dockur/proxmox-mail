@@ -88,32 +88,6 @@ volumes:
 
   Yes, see our [dockur/proxmox](https://github.com/dockur/proxmox) repository.
 
-### How do I verify if my system supports the KVM virtualization used by Proxmox?
-
-  First check if your software is compatible using this chart:
-
-  | **Product**  | **Linux** | **Win11** | **Win10** | **macOS** |
-  |---|---|---|---|---|
-  | Docker CLI        | ✅   | ✅       | ❌        | ❌ |
-  | Docker Desktop    | ❌   | ✅       | ❌        | ❌ | 
-  | Podman CLI        | ✅   | ✅       | ❌        | ❌ | 
-  | Podman Desktop    | ✅   | ✅       | ❌        | ❌ | 
-
-  After that you can run the following commands in Linux to check your system:
-
-  ```bash
-  sudo apt install cpu-checker
-  sudo kvm-ok
-  ```
-
-  If you receive an error from `kvm-ok` indicating that KVM cannot be used, please check whether:
-
-  - the virtualization extensions (`Intel VT-x` or `AMD SVM`) are enabled in your BIOS.
-
-  - you enabled "nested virtualization" if you are running the container inside a virtual machine.
-
-  - you are not using a cloud provider, as most of them do not allow nested virtualization for their VPS's.
-
 ## Acknowledgements 🙏
 
 Special thanks to [LongQT-sea](https://github.com/LongQT-sea), this project would not exist without his invaluable work.
