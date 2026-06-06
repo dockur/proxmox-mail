@@ -9,7 +9,7 @@ services:
       - 8443:8443
     volumes:
       - ./config:/etc/proxmox-datacenter-manager
-      - ./pdm:/var/lib/proxmox-datacenter-manager
+      - ./data:/var/lib/proxmox-datacenter-manager
     restart: always
     privileged: true
     stop_grace_period: 2m
