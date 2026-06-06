@@ -70,12 +70,11 @@ fi
 
 # Fix permissions
 
-DIR="/etc/proxmox-datacenter-manager"
-uid=$(stat -c '%u' "$DIR")
+dir="/etc/proxmox-datacenter-manager"
+uid=$(stat -c '%u' "$dir")
 
 if [ "$uid" -eq 0 ]; then
-  pdm_user=$(systemctl show -p User --value proxmox-datacenter-manager)
-  [ -n "$pdm_user" ] && chown -R "$pdm_user:$pdm_user" "$DIR"
+  chown -R 33:33 "$dir"
 fi
 
 exec "$@"
