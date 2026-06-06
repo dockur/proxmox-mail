@@ -69,6 +69,7 @@ apt-get install -y --no-install-recommends \
   wget \
   htop \
   less \
+  cpio \
   iotop \
   gnupg \
   procps \
