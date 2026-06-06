@@ -19,7 +19,7 @@ Proxmox Datacenter Manager inside a Docker container.
 - **Resource monitoring** — A global dashboard visualizes the state of every node, highlighting potential issues
 - **Easy backups** — Stores all your configuration in a volume mount, for easy backup and restore
 - **Task aggregation** — Centralized access to task logs across the entire infrastructure for auditing and troubleshooting
-- **Cross-cluster migration** — : Execute live migrations of virtual guests between nodes
+- **Cross-cluster migration** — Execute live migrations of virtual guests between nodes
 - **Update management** — Monitor available updates and security patches across the whole fleet
 
 ## Usage  🐳
