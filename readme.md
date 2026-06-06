@@ -15,12 +15,12 @@ Proxmox Datacenter Manager inside a Docker container.
 
 ## Features ✨
 
-- **High-performance** — Identically to bare-metal thanks to KVM acceleration
-- **Fast iteration** — Spin up or tear down a PVE node quickly within seconds
-- **Easy backups** — Stores all your configuration in a volume mount
-- **Simple networking** — Comes with a pre-configured NAT bridge with DHCP
-- **LXC supported** — LXC containers work out of the box
-- **Multi-platform** — Support for ARM64 processors via PXVIRT
+- **Centralized management** — Manage any number of PVE nodes using a modern web-interface
+- **Resource monitoring** — A global dashboard visualizes the state of every node, highlighting potential issues
+- **Easy backups** — Stores all your configuration in a volume mount, for easy backup and restore
+- **Task aggregation** — Centralized access to task logs across the entire infrastructure for auditing and troubleshooting
+- **Cross-cluster migration** — : Execute live migrations of virtual guests between nodes
+- **Update management** — Monitor available updates and security patches across the whole fleet
 
 ## Usage  🐳
 
