@@ -15,7 +15,7 @@ Proxmox Datacenter Manager inside a Docker container.
 
 ## Features ✨
 
-- **Centralized management** — Manage any number of PVE nodes using a modern web-interface
+- **Centralized management** — Manage any number of [Proxmox VE](https://github.com/dockur/proxmox/) nodes using a modern web-interface
 - **Resource monitoring** — A global dashboard visualizes the state of every node, highlighting potential issues
 - **Easy backups** — Stores all your configuration in a volume mount, for easy backup and restore
 - **Task aggregation** — Centralized access to task logs across the entire infrastructure for auditing and troubleshooting
@@ -83,6 +83,10 @@ volumes:
   ```
 
   Replace the example paths `./pdm` and `./config` with the desired storage folders or named volumes.
+
+### Is there also Proxmox VE in a container?
+
+  Yes, see our [dockur/proxmox](https://github.com/dockur/proxmox) repository.
 
 ### How do I verify if my system supports the KVM virtualization used by Proxmox?
 
