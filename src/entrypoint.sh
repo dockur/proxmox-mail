@@ -75,6 +75,7 @@ elif ! check_localtime; then
 fi
 
 # Ensure directory permissions
+user="www-data"
 dir="/etc/proxmox-datacenter-manager"
 
 mkdir -p "$dir"
@@ -90,7 +91,6 @@ mkdir -p "$dir"
 chown "root:$user" "$dir" || :
 
 # Generate keys
-user="www-data"
 keys="/etc/proxmox-datacenter-manager/auth"
 mkdir -p "$keys"
 
