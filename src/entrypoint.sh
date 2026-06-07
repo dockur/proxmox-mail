@@ -77,8 +77,8 @@ fi
 echo "Updating directory permissions..."
 
 # Fix directory permissions
+user="www-data"
 dir="/etc/proxmox-datacenter-manager"
-user=$(grep '^User=' /lib/systemd/system/proxmox-datacenter-api.service | cut -d= -f2)
 
 mkdir -p "$dir"
 chmod 1770 "$dir"
