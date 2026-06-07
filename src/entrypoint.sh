@@ -189,9 +189,9 @@ PRIV_API_PID=$!
 sock="/run/proxmox-datacenter-manager/priv.sock"
 
 # Wait for the privileged API socket to be ready
-for i in $(seq 1 30); do
+for i in $(seq 0 30); do
   [[ -S "$sock" ]] && break
-  info "Waiting for privileged API socket ($i/30)..."
+  (( i > 0 )) && info "Waiting for privileged API socket ($i/30)..."
   sleep 1
 done
 
