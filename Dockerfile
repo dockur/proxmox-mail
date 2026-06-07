@@ -141,8 +141,10 @@ ENV PASSWORD="root"
 
 EXPOSE 8443
 
+VOLUME /var/lib/pdm
 VOLUME /etc/proxmox-datacenter-manager
 VOLUME /var/lib/proxmox-datacenter-manager
+VOLUME /var/log/proxmox-datacenter-manager
 
 STOPSIGNAL SIGRTMIN+3
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
