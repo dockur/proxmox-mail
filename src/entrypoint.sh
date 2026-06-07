@@ -74,10 +74,28 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
-echo "Updating directory permissions..."
-
-# Fix directory permissions
+# Generate keys
 user="www-data"
+keys="/etc/proxmox-datacenter-manager"
+mkdir -p "$keys"
+
+if [[ ! -f "$keys/authkey.key" ]]; then
+  info "Generating authentication keys..."
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$KEY_DIR/authkey.key" 2>/dev/null
+  openssl pkey -in "$keys/authkey.key" -pubout -out "$KEY_DIR/authkey.pub" 2>/dev/null
+  chmod 640 "$keys/authkey.key"
+  chmod 644 "$keys/authkey.pub"
+  chown "root:$user" "$keys/authkey.key"
+fi
+
+if [[ ! -f "$keys/csrf.key" ]]; then
+  info "Generating CSRF key..."
+  openssl rand -base64 32 > "$keys/csrf.key"
+  chmod 640 "$keys/csrf.key"
+  chown "root:$user" "$keys/csrf.key"
+fi
+
+# Ensure directory permissions
 dir="/etc/proxmox-datacenter-manager"
 
 mkdir -p "$dir"
@@ -91,8 +109,6 @@ chown "$user:$user" "$dir" || :
 dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
 chown "root:$user" "$dir" || :
-
-echo "Booting PDM..."
 
 cleanup() {
 
