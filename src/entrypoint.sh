@@ -124,7 +124,7 @@ trap cleanup SIGTERM SIGINT
 # Start PDM Services
 echo "Starting proxmox-datacenter-privileged-api..."
 
-proxmox-datacenter-privileged-api &
+/usr/libexec/proxmox/proxmox-datacenter-privileged-api &
 PRIV_API_PID=$!
 
 # Wait for the privileged API socket to be ready
@@ -141,7 +141,7 @@ if [[ ! -S /run/proxmox-datacenter/privileged-api.sock ]]; then
 fi
 
 echo "Starting proxmox-datacenter-api as www-data on port ${PDM_PORT:-8443}..."
-su -s /bin/bash -c "proxmox-datacenter-api" www-data &
+su -s /bin/bash -c "/usr/libexec/proxmox/proxmox-datacenter-api" www-data &
 API_PID=$!
 
 info "PDM Web UI: https://127.0.0.1:${PDM_PORT:-8443}"
