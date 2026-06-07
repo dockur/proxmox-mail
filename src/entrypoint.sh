@@ -92,5 +92,56 @@ dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
 chown "root:$user" "$dir" || :
 
-echo "Booting Proxmox Datacenter Manager..."
-exec "$@"
+echo "Booting PDM..."
+
+cleanup() {
+    info "Shutting down PDM services..."
+
+    # Stop in reverse order
+    if [[ -n "$API_PID" ]] && kill -0 "$API_PID" 2>/dev/null; then
+        echo "Stopping proxmox-datacenter-api (PID $API_PID)..."
+        kill -TERM "$API_PID" 2>/dev/null || true
+    fi
+
+    if [[ -n "$PRIV_API_PID" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
+        echo "Stopping proxmox-datacenter-privileged-api (PID $PRIV_API_PID)..."
+        kill -TERM "$PRIV_API_PID" 2>/dev/null || true
+    fi
+
+    wait
+    info "Shutdown completed"
+    exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+
+# Start PDM Services
+echo "Starting proxmox-datacenter-privileged-api..."
+
+proxmox-datacenter-privileged-api &
+PRIV_API_PID=$!
+
+# Wait for the privileged API socket to be ready
+info "Waiting for privileged API socket..."
+for i in $(seq 1 30); do
+  if [[ -S /run/proxmox-datacenter/privileged-api.sock ]]; then
+    break
+  fi
+  sleep 1
+done
+
+if [[ ! -S /run/proxmox-datacenter/privileged-api.sock ]]; then
+  warn "Privileged API socket not found after 30s, starting API anyway."
+fi
+
+echo "Starting proxmox-datacenter-api as www-data on port ${PDM_PORT:-8443}..."
+su -s /bin/bash -c "proxmox-datacenter-api" www-data &
+API_PID=$!
+
+info "PDM Web UI:             https://127.0.0.1:${PDM_PORT:-8443}"
+
+# Wait for processes
+
+wait -n "$PRIV_API_PID" "$API_PID" 2>/dev/null || :
+info "A PDM process exited unexpectedly. Shutting down..."
+cleanup
