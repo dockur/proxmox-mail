@@ -95,24 +95,30 @@ chown "root:$user" "$dir" || :
 echo "Booting PDM..."
 
 cleanup() {
+
+    [ -f /proxmox.end ] && return 0
+  
+    touch /proxmox.end
     info "Shutting down PDM services..."
 
     # Stop in reverse order
-    if [[ -n "$API_PID" ]] && kill -0 "$API_PID" 2>/dev/null; then
+    if [[ -n "${API_PID:-}" ]] && kill -0 "$API_PID" 2>/dev/null; then
         echo "Stopping proxmox-datacenter-api (PID $API_PID)..."
         kill -TERM "$API_PID" 2>/dev/null || true
     fi
 
-    if [[ -n "$PRIV_API_PID" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
+    if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
         echo "Stopping proxmox-datacenter-privileged-api (PID $PRIV_API_PID)..."
         kill -TERM "$PRIV_API_PID" 2>/dev/null || true
     fi
 
     wait
-    info "Shutdown completed"
+    echo "Shutdown completed succesfully."
     exit 0
 }
 
+# Init trap
+rm -f /proxmox.end
 trap cleanup SIGTERM SIGINT
 
 # Start PDM Services
@@ -122,7 +128,7 @@ proxmox-datacenter-privileged-api &
 PRIV_API_PID=$!
 
 # Wait for the privileged API socket to be ready
-info "Waiting for privileged API socket..."
+echo "Waiting for privileged API socket..."
 for i in $(seq 1 30); do
   if [[ -S /run/proxmox-datacenter/privileged-api.sock ]]; then
     break
@@ -138,10 +144,10 @@ echo "Starting proxmox-datacenter-api as www-data on port ${PDM_PORT:-8443}..."
 su -s /bin/bash -c "proxmox-datacenter-api" www-data &
 API_PID=$!
 
-info "PDM Web UI:             https://127.0.0.1:${PDM_PORT:-8443}"
+info "PDM Web UI: https://127.0.0.1:${PDM_PORT:-8443}"
 
 # Wait for processes
+wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
 
-wait -n "$PRIV_API_PID" "$API_PID" 2>/dev/null || :
 info "A PDM process exited unexpectedly. Shutting down..."
 cleanup
