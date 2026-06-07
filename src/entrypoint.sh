@@ -192,8 +192,9 @@ if [[ ! -S "$sock" ]]; then
 fi
 
 echo "Starting proxmox-datacenter-api as $user on port ${PORT:-8443}..."
-su -s /bin/bash -c "$dir/proxmox-datacenter-api | grep -v \"failed to collect blockdev statistics for \"" www-data &
-API_PID=$!
+msg="failed to collect blockdev statistics for "
+su -s /bin/bash -c "$dir/proxmox-datacenter-api 2>&1 | grep -v \"$msg\" >&2" www-data
+&API_PID=$!
 
 echo ""
 info "------------------------------------------------------------------------------"
