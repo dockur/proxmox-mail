@@ -56,6 +56,7 @@ apt-get install -y --no-install-recommends \
   cpio \
   procps \
   locales \
+  rsyslog \
   iptables \
   iproute2 \
   ifupdown2 \
