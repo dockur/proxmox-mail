@@ -144,7 +144,7 @@ cleanup() {
   # Wait for processes
   wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
 
-  echo "Shutdown completed succesfully."
+  echo "Shutdown completed successfully."
   exit 0
 }
 
