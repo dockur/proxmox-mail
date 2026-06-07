@@ -82,7 +82,7 @@ mkdir -p "$keys"
 if [[ ! -f "$keys/authkey.key" ]]; then
   info "Generating authentication keys..."
   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$KEY_DIR/authkey.key" 2>/dev/null
-  openssl pkey -in "$keys/authkey.key" -pubout -out "$KEY_DIR/authkey.pub" 2>/dev/null
+  openssl pkey -in "$keys/authkey.key" -pubout -out "$keys/authkey.pub" 2>/dev/null
   chmod 640 "$keys/authkey.key"
   chmod 644 "$keys/authkey.pub"
   chown "root:$user" "$keys/authkey.key"
