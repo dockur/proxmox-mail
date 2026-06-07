@@ -8,10 +8,8 @@ services:
     ports:
       - 8443:8443
     volumes:
-      - ./pdm:/var/lib/pdm
       - ./config:/etc/proxmox-datacenter-manager
       - ./data:/var/lib/proxmox-datacenter-manager
-      - ./logs:/var/log/proxmox-datacenter-manager
     restart: always
     privileged: true
     stop_grace_period: 2m
