@@ -94,7 +94,7 @@ chown -R "$user:$user" "$dir"
 
 dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown -R "$user:$user" "$dir"
+chown -R 0:0 "$dir"
 
 echo "Booting Proxmox Datacenter Manager..."
 exec "$@"
