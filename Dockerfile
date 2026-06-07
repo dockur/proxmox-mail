@@ -115,6 +115,13 @@ Description=Keyboard Request Target
 [Target]
 KBR
 
+# Fix ifupdown2-pre.service for container (no udev)
+cat >/etc/systemd/system/ifupdown2-pre.service.d/override.conf <<IUD
+[Service]
+ExecStart=
+ExecStart=/bin/true
+IUD
+
 # Set username and password
 echo "root:root" | chpasswd
 
