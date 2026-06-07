@@ -74,23 +74,121 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
-echo "Updating directory permissions..."
-
-# Fix directory permissions
+# Ensure directory permissions
+user="www-data"
 dir="/etc/proxmox-datacenter-manager"
-user=$(grep '^User=' /lib/systemd/system/proxmox-datacenter-api.service | cut -d= -f2)
 
 mkdir -p "$dir"
-chmod 1770 "$dir"
-chown -R "$user:$user" "$dir"
+chmod 1770 "$dir" || :
+chown "$user:$user" "$dir" || :
+
+dir="/etc/proxmox-datacenter-manager/auth"
+mkdir -p "$dir"
+chmod 750 "$dir" || :
+chown "root:$user" "$dir" || :
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown -R "$user:$user" "$dir"
+chown "$user:$user" "$dir" || :
 
 dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown "root:$user" "$dir"
+chown "root:$user" "$dir" || :
 
-echo "Booting Proxmox Datacenter Manager..."
-exec "$@"
+# Generate keys
+keys="/etc/proxmox-datacenter-manager/auth"
+
+if [[ ! -f "$keys/authkey.key" ]]; then
+  info "Generating authentication keys..."
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$keys/authkey.key" 2>/dev/null
+  openssl pkey -in "$keys/authkey.key" -pubout -out "$keys/authkey.pub" 2>/dev/null
+  chmod 640 "$keys/authkey.key"
+  chmod 644 "$keys/authkey.pub"
+  chown "root:$user" "$keys/authkey.key"
+fi
+
+if [[ ! -f "$keys/csrf.key" ]]; then
+  info "Generating CSRF key..."
+  openssl rand -base64 32 > "$keys/csrf.key"
+  chmod 640 "$keys/csrf.key"
+  chown "root:$user" "$keys/csrf.key"
+fi
+
+if [ ! -f "$keys/api.key" ] || [ ! -f "$keys/api.pem" ]; then
+  info "Generating API key..."
+
+  openssl req -x509 -newkey rsa:4096 -keyout "$keys/api.key" -out "$keys/api.pem" -sha256 -days 3650 -nodes \
+              -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname" 2>/dev/null
+  chmod 640 "$keys/api.key"
+  chmod 640 "$keys/api.pem"
+  chown "root:$user" "$keys/api.key"
+  chown "root:$user" "$keys/api.pem"
+fi
+
+cleanup() {
+
+  [ -f /proxmox.end ] && return 0
+
+  touch /proxmox.end
+  echo "Shutting down PDM services..."
+
+  # Stop in reverse order
+  if [[ -n "${API_PID:-}" ]] && kill -0 "$API_PID" 2>/dev/null; then
+    kill -TERM "$API_PID" 2>/dev/null || :
+  fi
+
+  if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
+    kill -TERM "$PRIV_API_PID" 2>/dev/null || :
+  fi
+
+  # Wait for processes
+  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
+
+  echo "Shutdown completed successfully."
+  exit 0
+}
+
+# Init trap
+rm -f /proxmox.end
+trap cleanup SIGTERM SIGINT
+
+# Start PDM Services
+dir="/usr/libexec/proxmox"
+echo "Starting proxmox-datacenter-privileged-api..."
+
+"$dir/proxmox-datacenter-privileged-api" &
+
+PRIV_API_PID=$!
+sock="/run/proxmox-datacenter-manager/priv.sock"
+
+# Wait for the privileged API socket to be ready
+for i in $(seq 1 30); do
+  [[ -S "$sock" ]] && break
+  info "Waiting for privileged API socket ($i/30)..."
+  sleep 1
+done
+
+if [[ ! -S "$sock" ]]; then
+  warn "Privileged API socket not found after 30s, starting API anyway."
+fi
+
+echo "Starting proxmox-datacenter-api as $user on port ${PORT:-8443}..."
+su -s /bin/bash -c "$dir/proxmox-datacenter-api" www-data &
+API_PID=$!
+
+echo ""
+info "------------------------------------------------------------------------------"
+info ""
+info ". Welcome to the Proxmox Datacenter Manager. Please use your web browser to
+configure this server - connect to:"
+info ""
+info ".   https://127.0.0.1:${PORT:-8443}"
+info ""
+info "------------------------------------------------------------------------------"
+info ""
+
+# Wait for processes
+wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
+
+info "A PDM process exited unexpectedly. Shutting down..."
+cleanup
