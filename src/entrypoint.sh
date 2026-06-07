@@ -74,9 +74,24 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
+# Ensure directory permissions
+dir="/etc/proxmox-datacenter-manager"
+
+mkdir -p "$dir"
+chmod 1770 "$dir" || :
+chown "$user:$user" "$dir" || :
+
+dir="/var/lib/proxmox-datacenter-manager"
+mkdir -p "$dir"
+chown "$user:$user" "$dir" || :
+
+dir="/var/log/proxmox-datacenter-manager"
+mkdir -p "$dir"
+chown "root:$user" "$dir" || :
+
 # Generate keys
 user="www-data"
-keys="/etc/proxmox-datacenter-manager"
+keys="/etc/proxmox-datacenter-manager/auth"
 mkdir -p "$keys"
 
 if [[ ! -f "$keys/authkey.key" ]]; then
@@ -94,21 +109,6 @@ if [[ ! -f "$keys/csrf.key" ]]; then
   chmod 640 "$keys/csrf.key"
   chown "root:$user" "$keys/csrf.key"
 fi
-
-# Ensure directory permissions
-dir="/etc/proxmox-datacenter-manager"
-
-mkdir -p "$dir"
-chmod 1770 "$dir" || :
-chown "$user:$user" "$dir" || :
-
-dir="/var/lib/proxmox-datacenter-manager"
-mkdir -p "$dir"
-chown "$user:$user" "$dir" || :
-
-dir="/var/log/proxmox-datacenter-manager"
-mkdir -p "$dir"
-chown "root:$user" "$dir" || :
 
 cleanup() {
 
