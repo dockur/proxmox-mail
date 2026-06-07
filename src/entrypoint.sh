@@ -74,10 +74,6 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
-# Redirect rsyslog
-sed -i '/.*imklog.*/d' /etc/rsyslog.conf && \
-    echo '*.* -/proc/1/fd/1' >> /etc/rsyslog.conf
-
 # Start rsyslog
 rsyslogd
 RSYSLOG_PID=$(cat /var/run/rsyslogd.pid 2>/dev/null || echo "")
