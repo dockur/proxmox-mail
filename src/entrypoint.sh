@@ -130,9 +130,9 @@ cleanup() {
     kill -TERM "$PRIV_API_PID" 2>/dev/null || :
   fi
 
-  info "Waiting for services to stop.."
-  [ -n "${API_PID:-}" ] && wait "$API_PID" || :
-  [ -n "${PRIV_API_PID:-}" ] && wait "$PRIV_API_PID" || :
+  # Wait for processes
+  echo "Waiting for services to stop.."
+  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
 
   echo "Shutdown completed succesfully."
   exit 0
