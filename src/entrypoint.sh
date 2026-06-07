@@ -74,18 +74,6 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
-# Start rsyslog
-echo "Starting rsyslog..."
-rsyslogd
-RSYSLOG_PID=$(cat /var/run/rsyslogd.pid 2>/dev/null || echo "")
-
-echo "Starting Postfix..."
-RELAY_HOST=${RELAY_HOST:-ext.home.local}
-sed -i "s/RELAY_HOST/$RELAY_HOST/" /etc/postfix/main.cf
-
-/etc/init.d/postfix start || ok=1
-read -r POSTFIX_PID < /var/spool/postfix/pid/master.pid
-
 # Ensure directory permissions
 user="www-data"
 dir="/etc/proxmox-datacenter-manager"
@@ -143,6 +131,18 @@ if [ ! -f "$keys/api.key" ] || [ ! -f "$keys/api.pem" ]; then
   chown "root:$user" "$keys/api.key"
   chown "root:$user" "$keys/api.pem"
 fi
+
+echo "Starting Postfix..."
+RELAY_HOST=${RELAY_HOST:-ext.home.local}
+sed -i "s/RELAY_HOST/$RELAY_HOST/" /etc/postfix/main.cf
+
+/etc/init.d/postfix start || ok=1
+read -r POSTFIX_PID < /var/spool/postfix/pid/master.pid
+
+# Start rsyslog
+echo "Starting rsyslog..."
+rsyslogd
+RSYSLOG_PID=$(cat /var/run/rsyslogd.pid 2>/dev/null || echo "")
 
 _trap() {
   local func="$1"; shift
