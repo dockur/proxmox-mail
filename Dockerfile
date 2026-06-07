@@ -92,6 +92,10 @@ locale-gen en_US.UTF-8
 # Set username and password
 echo "root:root" | chpasswd
 
+# Redirect rsyslog
+sed -i '/.*imklog.*/d' /etc/rsyslog.conf && \
+    echo '*.* -/proc/1/fd/1' >> /etc/rsyslog.conf
+
 # Store version number
 echo "$VERSION_ARG" > /etc/version
 
