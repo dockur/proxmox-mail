@@ -110,6 +110,6 @@ VOLUME /etc/proxmox-datacenter-manager
 VOLUME /var/lib/proxmox-datacenter-manager
 
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -kLfSs https://localhost:8443/api2/json/version >/dev/null || exit 1
+  CMD curl -kLfSs https://localhost:8443/ >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "-s", "/usr/local/bin/entrypoint.sh"]
