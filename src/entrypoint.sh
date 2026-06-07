@@ -84,7 +84,7 @@ chown "$user:$user" "$dir" || :
 
 dir="/etc/proxmox-datacenter-manager/auth"
 mkdir -p "$dir"
-chown "root:$user" "$dir" || :
+chown "root:root" "$dir" || :
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
@@ -130,8 +130,8 @@ cleanup() {
   fi
 
   info "Waiting for services to stop.."
-  wait "$API_PID" || :
-  wait "$PRIV_API_PID" || :
+  wait "${API_PID:-}" || :
+  wait "${PRIV_API_PID:-}" || :
 
   echo "Shutdown completed succesfully."
   exit 0
