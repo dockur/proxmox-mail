@@ -82,11 +82,11 @@ dir="/etc/proxmox-datacenter-manager"
 
 mkdir -p "$dir"
 chmod 1770 "$dir"
-chown -R "$user:$user" "$dir"
+chown "$user:$user" "$dir"
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown -R "$user:$user" "$dir"
+chown "$user:$user" "$dir"
 
 dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
