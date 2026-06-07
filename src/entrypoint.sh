@@ -132,6 +132,10 @@ if [ ! -f "$keys/api.key" ] || [ ! -f "$keys/api.pem" ]; then
   chown "root:$user" "$keys/api.pem"
 fi
 
+# Redirect rsyslog
+sed -i '/.*imklog.*/d' /etc/rsyslog.conf && \
+    echo '*.* -/proc/1/fd/1' >> /etc/rsyslog.conf
+
 _trap() {
   local func="$1"; shift
   local sig
