@@ -84,7 +84,8 @@ chown "$user:$user" "$dir" || :
 
 dir="/etc/proxmox-datacenter-manager/auth"
 mkdir -p "$dir"
-chown "$user:$user" "$dir" || :
+chmod 750 "$dir" || :
+chown "root:$user" "$dir" || :
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
