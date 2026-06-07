@@ -40,14 +40,13 @@ services:
       - ./config:/etc/proxmox-datacenter-manager
       - ./data:/var/lib/proxmox-datacenter-manager
     restart: always
-    privileged: true
     stop_grace_period: 2m
 ```
 
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
+docker run -it --rm --name pdm --hostname pdm -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
 ```
 
 ##### Via Github Codespaces:
