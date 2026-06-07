@@ -44,11 +44,11 @@ Pin: release *
 Pin-Priority: -1
 BLK
 
-# Update system and install Proxmox Datacenter Manager
+# Install prerequisite packages
 apt-get update
 apt-get full-upgrade -y
 apt-get install -y --no-install-recommends \
-  dbus \
+  tini \
   nano \
   wget \
   htop \
@@ -63,15 +63,14 @@ apt-get install -y --no-install-recommends \
   nfs-common \
   cifs-utils \
   traceroute \
-  systemd-sysv \
   iputils-ping \
   netcat-openbsd \
   isc-dhcp-client
 
-apt-get install -y \
-  proxmox-mail-forward \
+# Install Proxmox Datacenter Manager
+apt-get install -y --no-install-recommends \
   proxmox-datacenter-manager \
-  proxmox-offline-mirror-helper
+  proxmox-datacenter-manager-ui \
 
 # Remove enterprise repo added by Proxmox packages — keep only no-subscription
 rm -f /etc/apt/sources.list.d/pdm-enterprise.list \
@@ -80,7 +79,7 @@ rm -f /etc/apt/sources.list.d/pdm-enterprise.list \
       /etc/apt/sources.list.d/ceph.sources
 
 # Prevent system updates
-apt-mark hold proxmox-datacenter-manager proxmox-mail-forward proxmox-offline-mirror-helper
+apt-mark hold proxmox-datacenter-manager proxmox-datacenter-manager-ui
 
 # Cleanup
 apt-get autoremove -y
@@ -88,40 +87,6 @@ apt-get clean
 
 # Generate locales
 locale-gen en_US.UTF-8
-
-# Mask unneeded services 
-ln -sf /dev/null /etc/systemd/system/systemd-udevd.service
-ln -sf /dev/null /etc/systemd/system/systemd-udevd-kernel.socket
-ln -sf /dev/null /etc/systemd/system/systemd-udevd-control.socket
-ln -sf /dev/null /etc/systemd/system/systemd-modules-load.service
-ln -sf /dev/null /etc/systemd/system/systemd-networkd-wait-online.service
-
-# Mask unneeded mounts
-systemctl mask \
-    sys-kernel-debug.mount \
-    sys-kernel-config.mount \
-    sys-kernel-tracing.mount \
-    proc-sys-fs-binfmt_misc.automount
-
-# Config journald
-mkdir -p /etc/systemd/journald.conf.d
-echo "[Journal]\nRuntimeMaxUse=500M" > /etc/systemd/journald.conf.d/container.conf
-
-# Disable keyboard request target (for Docker TTY)
-cat >/etc/systemd/system/kbrequest.target <<KBR
-[Unit]
-Description=Keyboard Request Target
-
-[Target]
-KBR
-
-# Fix ifupdown2-pre.service for container (no udev)
-mkdir -p /etc/systemd/system/ifupdown2-pre.service.d
-cat >/etc/systemd/system/ifupdown2-pre.service.d/override.conf <<IUD
-[Service]
-ExecStart=
-ExecStart=/bin/true
-IUD
 
 # Set username and password
 echo "root:root" | chpasswd
@@ -144,9 +109,7 @@ EXPOSE 8443
 VOLUME /etc/proxmox-datacenter-manager
 VOLUME /var/lib/proxmox-datacenter-manager
 
-STOPSIGNAL SIGRTMIN+3
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -kLfSs https://localhost:8443/api2/json/version >/dev/null || exit 1
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/sbin/init", "--log-target=console", "--log-level=notice"]
+ENTRYPOINT ["/usr/bin/tini", "-s", "/usr/local/bin/entrypoint.sh"]
