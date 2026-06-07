@@ -19,7 +19,6 @@ apt-get update
 
 # Install prerequisites
 apt-get --no-install-recommends -y install \
-  jq \
   curl \
   ca-certificates
 apt-get clean
@@ -48,6 +47,7 @@ BLK
 apt-get update
 apt-get full-upgrade -y
 apt-get install -y --no-install-recommends \
+  jq \
   tini \
   nano \
   wget \
@@ -56,6 +56,7 @@ apt-get install -y --no-install-recommends \
   cpio \
   procps \
   locales \
+  rsyslog \
   iptables \
   iproute2 \
   ifupdown2 \
