@@ -114,6 +114,15 @@ if [[ ! -f "$keys/csrf.key" ]]; then
   chown "root:$user" "$keys/csrf.key"
 fi
 
+if [ ! -f "$keys/api.key" ] || [ ! -f "$keys/api.pem" ]; then
+  info "Generating API key..."
+  openssl req -x509 -newkey rsa:4096 -keyout "$keys/api.key" -out "$keys/api.pem" -nodes
+  chmod 640 "$keys/api.key"
+  chmod 640 "$keys/api.pem"
+  chown "root:$user" "$keys/api.key"
+  chown "root:$user" "$keys/api.pem"
+fi
+
 cleanup() {
 
   [ -f /proxmox.end ] && return 0
