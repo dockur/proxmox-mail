@@ -114,10 +114,15 @@ if [[ ! -f "$keys/csrf.key" ]]; then
   chown "root:$user" "$keys/csrf.key"
 fi
 
+# Start rsyslog
+echo "Starting rsyslog..."
+rsyslogd
+RSYSLOG_PID=$(cat /var/run/rsyslogd.pid 2>/dev/null || echo "")
+
 cleanup() {
 
   [ -f /proxmox.end ] && return 0
-  
+
   touch /proxmox.end
   echo "Shutting down PDM services..."
 
@@ -130,9 +135,13 @@ cleanup() {
     kill -TERM "$PRIV_API_PID" 2>/dev/null || :
   fi
 
+  if [[ -n "${RSYSLOG_PID:-}" ]] && kill -0 "$RSYSLOG_PID" 2>/dev/null; then
+    kill -TERM "$RSYSLOG_PID" 2>/dev/null || :
+  fi
+  
   # Wait for processes
   echo "Waiting for services to stop.."
-  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
+  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" "${RSYSLOG_PID:-}" 2>/dev/null || :
 
   echo "Shutdown completed succesfully."
   exit 0
