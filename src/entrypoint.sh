@@ -152,13 +152,13 @@ PRIV_API_PID=$!
 sock="/run/proxmox-datacenter-manager/priv.sock"
 
 # Wait for the privileged API socket to be ready
-for i in $(seq 1 "$max"); do
+for i in $(seq 1 max); do
   [[ -S "$sock" ]] && break
   info "Waiting for privileged API socket ($i/$max)..."
   sleep 1
 done
 
-if [[ ! -S /run/proxmox-datacenter/privileged-api.sock ]]; then
+if [[ ! -S "$sock" ]]; then
   warn "Privileged API socket not found after 30s, starting API anyway."
 fi
 
@@ -167,7 +167,7 @@ su -s /bin/bash -c "$dir/proxmox-datacenter-api" www-data &
 API_PID=$!
 
 echo ""
-echo "PDM Web UI: https://127.0.0.1:${PDM_PORT:-8443}"
+echo "PDM Web UI: https://127.0.0.1:${PORT:-8443}"
 echo ""
 
 # Wait for processes
