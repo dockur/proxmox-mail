@@ -37,8 +37,10 @@ services:
     ports:
       - 8443:8443
     volumes:
+      - ./pdm:/var/lib/pdm
       - ./config:/etc/proxmox-datacenter-manager
       - ./data:/var/lib/proxmox-datacenter-manager
+      - ./logs:/var/logs/proxmox-datacenter-manager
     restart: always
     privileged: true
     stop_grace_period: 2m
@@ -47,7 +49,7 @@ services:
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
+docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/pdm:/var/lib/pdm" -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" -v "${PWD:-.}/logs:/var/logs/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
 ```
 
 ##### Via Github Codespaces:
@@ -75,14 +77,15 @@ docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p
 ### How do I change the location of the configuration data?
 
   To change the location of the configuration data, include the following two bind mounts in your compose file:
-  
+
   ```yaml
 volumes:
+  - ./pdm:/var/lib/pdm
   - ./config:/etc/proxmox-datacenter-manager
   - ./data:/var/lib/proxmox-datacenter-manager
   ```
 
-  Replace the example paths `./config` and `./data` with the desired folders or named volumes.
+  Replace the example paths with the desired folders or named volumes.
 
 ### Are there containers available for other Proxmox products?
 
