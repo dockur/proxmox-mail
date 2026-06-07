@@ -23,8 +23,58 @@ echo ""
 # Update password for root
 printf 'root:%s\n' "$PASSWORD" | chpasswd
 
-# Fix permissions
+# Get the capability bounding set
+CAP_BND=$(grep '^CapBnd:' /proc/$$/status | awk '{print $2}')
+CAP_BND=$(printf "%d" "0x${CAP_BND}")
 
+# Get the last capability number
+LAST_CAP=$(cat /proc/sys/kernel/cap_last_cap)
+
+# Calculate the maximum capability value
+MAX_CAP=$(((1 << (LAST_CAP + 1)) - 1))
+
+# Check if container is privileged
+if [ "${CAP_BND}" -ne "${MAX_CAP}" ]; then
+  error "Please start the container with the --privileged flag!"
+  [[ "${DEBUG:-}" != [Yy1]* ]] && exit 14
+fi
+
+# If missing timezone and localtime set them
+set_timezone() {
+  local zone="$1"
+
+  if [ ! -f "/usr/share/zoneinfo/$zone" ]; then
+    echo "Invalid timezone: $zone" >&2
+    exit 18
+  fi
+
+  ln -snf "/usr/share/zoneinfo/$zone" /etc/localtime
+  echo "$zone" > /etc/timezone
+}
+
+check_localtime() {
+  if [ ! -e /etc/localtime ] && [ ! -L /etc/localtime ]; then
+    return 1
+  fi
+
+  local target
+  target="$(readlink -f /etc/localtime 2>/dev/null || true)"
+
+  if [ -z "$target" ] || [ ! -f "$target" ] || [ ! -s "$target" ]; then
+    echo "Invalid TZ value." >&2
+    exit 1
+  fi
+
+  return 0
+}
+
+if [ -n "${TZ:-}" ]; then
+  set_timezone "$TZ"
+elif ! check_localtime; then
+  set_timezone "UTC"
+fi
+
+# Fix directory permissions
 dir="/etc/proxmox-datacenter-manager"
 user=$(grep '^User=' /lib/systemd/system/proxmox-datacenter-api.service | cut -d= -f2)
 
