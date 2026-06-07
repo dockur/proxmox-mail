@@ -149,7 +149,7 @@ echo "Starting proxmox-datacenter-privileged-api..."
 
 max=30
 PRIV_API_PID=$!
-sock="/run/proxmox-datacenter/privileged-api.sock"
+sock="/run/proxmox-datacenter-manager/priv.sock"
 
 # Wait for the privileged API socket to be ready
 for i in $(seq 1 "$max"); do
