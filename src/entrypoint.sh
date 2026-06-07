@@ -74,16 +74,27 @@ elif ! check_localtime; then
   set_timezone "UTC"
 fi
 
+echo "Updating directory permissions..."
+
 # Fix directory permissions
 dir="/etc/proxmox-datacenter-manager"
 user=$(grep '^User=' /lib/systemd/system/proxmox-datacenter-api.service | cut -d= -f2)
 
 mkdir -p "$dir"
 chmod 1770 "$dir"
-chown "$user:$user" "$dir"
+chown -R "$user:$user" "$dir"
+
+dir="/var/lib/pdm"
+mkdir -p "$dir"
+chown -R "$user:$user" "$dir"
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown "$user:$user" "$dir"
+chown -R "$user:$user" "$dir"
 
+dir="/var/log/proxmox-datacenter-manager"
+mkdir -p "$dir"
+chown -R "$user:$user" "$dir"
+
+echo "Booting Proxmox Datacenter Manager..."
 exec "$@"
