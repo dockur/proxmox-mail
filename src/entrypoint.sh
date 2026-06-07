@@ -150,11 +150,11 @@ echo "Starting proxmox-datacenter-privileged-api..."
 PRIV_API_PID=$!
 
 # Wait for the privileged API socket to be ready
-echo "Waiting for privileged API socket..."
 for i in $(seq 1 30); do
   if [[ -S /run/proxmox-datacenter/privileged-api.sock ]]; then
     break
   fi
+  echo "Waiting for privileged API socket ($i/30)..."
   sleep 1
 done
 
