@@ -82,6 +82,10 @@ mkdir -p "$dir"
 chmod 1770 "$dir" || :
 chown "$user:$user" "$dir" || :
 
+dir="/etc/proxmox-datacenter-manager/auth"
+mkdir -p "$dir"
+chown "root:$user" "$dir" || :
+
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
 chown "$user:$user" "$dir" || :
@@ -92,7 +96,6 @@ chown "root:$user" "$dir" || :
 
 # Generate keys
 keys="/etc/proxmox-datacenter-manager/auth"
-mkdir -p "$keys"
 
 if [[ ! -f "$keys/authkey.key" ]]; then
   info "Generating authentication keys..."
@@ -124,7 +127,8 @@ cleanup() {
 
   if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
     kill -TERM "$PRIV_API_PID" 2>/dev/null || :
-  fi
+  f
+  i
 
   info "Waiting for services to stop.."
   wait "$API_PID" || :
