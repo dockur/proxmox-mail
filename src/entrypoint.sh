@@ -95,6 +95,9 @@ dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
 chown "root:$user" "$dir" || :
 
+mkdir -p /run/proxmox-datacenter-manager
+mount -t tmpfs -o ro,noexec,nosuid tmpfs /run/proxmox-datacenter-manager/shmem
+
 # Generate keys
 keys="/etc/proxmox-datacenter-manager/auth"
 
