@@ -127,8 +127,7 @@ cleanup() {
 
   if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
     kill -TERM "$PRIV_API_PID" 2>/dev/null || :
-  f
-  i
+  fi
 
   info "Waiting for services to stop.."
   wait "$API_PID" || :
