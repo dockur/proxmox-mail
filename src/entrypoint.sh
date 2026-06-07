@@ -177,8 +177,15 @@ su -s /bin/bash -c "$dir/proxmox-datacenter-api" www-data &
 API_PID=$!
 
 echo ""
-echo "PDM Web UI: https://127.0.0.1:${PORT:-8443}"
-echo ""
+info "------------------------------------------------------------------------------"
+info ""
+info ". Welcome to the Proxmox Datacenter Manager. Please use your web browser to
+configure this server - connect to:"
+info ""
+info ".   https://127.0.0.1:${PORT:-8443}"
+info ""
+info "------------------------------------------------------------------------------"
+info ""
 
 # Wait for processes
 wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
