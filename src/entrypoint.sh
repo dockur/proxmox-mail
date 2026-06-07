@@ -192,16 +192,12 @@ if [[ ! -S "$sock" ]]; then
 fi
 
 echo "Starting proxmox-datacenter-api as $user on port ${PORT:-8443}..."
-
-file=/run/api.pid
 msg="failed to collect blockdev statistics for "
 
-su -s /bin/bash -c '
-    echo $$ > "'"$file"'"
-    exec "'"$dir"'/proxmox-datacenter-api" 2>&1
-' www-data | grep -v "$msg" >&2 &
-
-! read -r API_PID <"$file" && error "Failed to read PID" && exit 1
+runuser -u www-data -- \
+    "$dir/proxmox-datacenter-api" \
+    2> >(grep -v "$msg" >&2) &
+API_PID=$!
 
 echo ""
 info "------------------------------------------------------------------------------"
