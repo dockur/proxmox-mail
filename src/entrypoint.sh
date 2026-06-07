@@ -96,25 +96,26 @@ echo "Booting PDM..."
 
 cleanup() {
 
-    [ -f /proxmox.end ] && return 0
+  [ -f /proxmox.end ] && return 0
   
-    touch /proxmox.end
-    info "Shutting down PDM services..."
+  touch /proxmox.end
+  info "Shutting down PDM services..."
 
-    # Stop in reverse order
-    if [[ -n "${API_PID:-}" ]] && kill -0 "$API_PID" 2>/dev/null; then
-        echo "Stopping proxmox-datacenter-api (PID $API_PID)..."
-        kill -TERM "$API_PID" 2>/dev/null || true
-    fi
+  # Stop in reverse order
+  if [[ -n "${API_PID:-}" ]] && kill -0 "$API_PID" 2>/dev/null; then
+    echo "Stopping proxmox-datacenter-api (PID $API_PID)..."
+    kill -TERM "$API_PID" 2>/dev/null || :
+  fi
 
-    if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
-        echo "Stopping proxmox-datacenter-privileged-api (PID $PRIV_API_PID)..."
-        kill -TERM "$PRIV_API_PID" 2>/dev/null || true
-    fi
+  if [[ -n "${PRIV_API_PID:-}" ]] && kill -0 "$PRIV_API_PID" 2>/dev/null; then
+    echo "Stopping proxmox-datacenter-privileged-api (PID $PRIV_API_PID)..."
+    kill -TERM "$PRIV_API_PID" 2>/dev/null || :
+  fi
 
-    wait
-    echo "Shutdown completed succesfully."
-    exit 0
+  wait
+  echo "Shutdown completed succesfully."
+
+  exit 0
 }
 
 # Init trap
