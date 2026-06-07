@@ -11,5 +11,4 @@ services:
       - ./config:/etc/proxmox-datacenter-manager
       - ./data:/var/lib/proxmox-datacenter-manager
     restart: always
-    privileged: true
     stop_grace_period: 2m
