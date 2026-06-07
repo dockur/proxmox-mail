@@ -81,16 +81,16 @@ user="www-data"
 dir="/etc/proxmox-datacenter-manager"
 
 mkdir -p "$dir"
-chmod 1770 "$dir"
-chown "$user:$user" "$dir"
+chmod 1770 "$dir" || :
+chown "$user:$user" "$dir" || :
 
 dir="/var/lib/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown "$user:$user" "$dir"
+chown "$user:$user" "$dir" || :
 
 dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
-chown "root:$user" "$dir"
+chown "root:$user" "$dir" || :
 
 echo "Booting Proxmox Datacenter Manager..."
 exec "$@"
