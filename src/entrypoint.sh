@@ -114,11 +114,6 @@ if [[ ! -f "$keys/csrf.key" ]]; then
   chown "root:$user" "$keys/csrf.key"
 fi
 
-# Start rsyslog
-echo "Starting rsyslog..."
-rsyslogd
-RSYSLOG_PID=$(cat /var/run/rsyslogd.pid 2>/dev/null || echo "")
-
 cleanup() {
 
   [ -f /proxmox.end ] && return 0
@@ -135,13 +130,8 @@ cleanup() {
     kill -TERM "$PRIV_API_PID" 2>/dev/null || :
   fi
 
-  if [[ -n "${RSYSLOG_PID:-}" ]] && kill -0 "$RSYSLOG_PID" 2>/dev/null; then
-    kill -TERM "$RSYSLOG_PID" 2>/dev/null || :
-  fi
-  
   # Wait for processes
-  echo "Waiting for services to stop.."
-  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" "${RSYSLOG_PID:-}" 2>/dev/null || :
+  wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
 
   echo "Shutdown completed succesfully."
   exit 0
@@ -156,14 +146,15 @@ dir="/usr/libexec/proxmox"
 echo "Starting proxmox-datacenter-privileged-api..."
 
 "$dir/proxmox-datacenter-privileged-api" &
+
+max=30
 PRIV_API_PID=$!
+sock="/run/proxmox-datacenter/privileged-api.sock"
 
 # Wait for the privileged API socket to be ready
-for i in $(seq 1 30); do
-  if [[ -S /run/proxmox-datacenter/privileged-api.sock ]]; then
-    break
-  fi
-  info "Waiting for privileged API socket ($i/30)..."
+for i in $(seq 1 "$max"); do
+  [[ -S "$sock" ]] && break
+  info "Waiting for privileged API socket ($i/$max)..."
   sleep 1
 done
 
@@ -171,11 +162,13 @@ if [[ ! -S /run/proxmox-datacenter/privileged-api.sock ]]; then
   warn "Privileged API socket not found after 30s, starting API anyway."
 fi
 
-echo "Starting proxmox-datacenter-api as www-data on port ${PDM_PORT:-8443}..."
+echo "Starting proxmox-datacenter-api as $user on port ${PORT:-8443}..."
 su -s /bin/bash -c "$dir/proxmox-datacenter-api" www-data &
 API_PID=$!
 
-info "PDM Web UI: https://127.0.0.1:${PDM_PORT:-8443}"
+echo ""
+echo "PDM Web UI: https://127.0.0.1:${PDM_PORT:-8443}"
+echo ""
 
 # Wait for processes
 wait -n "${PRIV_API_PID:-}" "${API_PID:-}" 2>/dev/null || :
