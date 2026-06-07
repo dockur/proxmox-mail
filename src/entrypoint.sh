@@ -95,8 +95,12 @@ dir="/var/log/proxmox-datacenter-manager"
 mkdir -p "$dir"
 chown "root:$user" "$dir" || :
 
-mkdir -p /run/proxmox-datacenter-manager
-mount -t tmpfs -o ro,noexec,nosuid tmpfs /run/proxmox-datacenter-manager/shmem
+dir="/run/proxmox-datacenter-manager"
+mkdir -p "$dir/shmem"
+chmod 1770 "$dir" || :
+chown "root:$user" "$dir" || :
+chown "root:root" "$dir/shmem" || :
+mount -t tmpfs -o rw tmpfs "$dir/shmem"
 
 # Generate keys
 keys="/etc/proxmox-datacenter-manager/auth"
@@ -176,8 +180,14 @@ if [[ ! -S "$sock" ]]; then
   warn "Privileged API socket not found after 30s, starting API anyway."
 fi
 
+fifo=/pdm.pipe
+rm -f "$fifo"
+mkfifo "$fifo"
+
+grep -v "failed to collect blockdev statistics for '/'" < "$fifo" >&2 &
+
 echo "Starting proxmox-datacenter-api as $user on port ${PORT:-8443}..."
-su -s /bin/bash -c "$dir/proxmox-datacenter-api" www-data &
+su -s /bin/bash -c "$dir/proxmox-datacenter-api 2>$fifo" www-data &
 API_PID=$!
 
 echo ""
