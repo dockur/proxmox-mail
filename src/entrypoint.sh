@@ -102,6 +102,10 @@ chown "root:$user" "$dir" || :
 chown "root:root" "$dir/shmem" || :
 mount -t tmpfs -o rw tmpfs "$dir/shmem"
 
+# TODO:
+#
+# - Daily cron jobs
+
 # Generate keys
 keys="/etc/proxmox-datacenter-manager/auth"
 
