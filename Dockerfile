@@ -43,17 +43,9 @@ apt-get install -y --no-install-recommends \
   ca-certificates \
   isc-dhcp-client
 
-# Add Proxmox Datacenter Manager repository
-curl -sL https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg \
-     -o /usr/share/keyrings/proxmox-archive-keyring.gpg
-
-cat >/etc/apt/sources.list.d/pdm-no-subs.sources <<DEB
-Types: deb
-URIs: http://download.proxmox.com/debian/pdm
-Suites: trixie
-Components: pdm-no-subscription
-Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
-DEB
+# Prevent services from starting during install
+printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
 
 # Block unneeded packages in container
 cat >/etc/apt/preferences.d/99-pdm-unneeded-packages <<BLK
@@ -61,10 +53,6 @@ Package: proxmox-default-kernel proxmox-kernel-* pve-firmware
 Pin: release *
 Pin-Priority: -1
 BLK
-
-# Prevent services from starting during install
-printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
-chmod +x /usr/sbin/policy-rc.d
 
 # Stub commands unavailable / problematic in a Docker build
 dpkg-divert --local --rename --add /usr/bin/unshare
@@ -81,10 +69,49 @@ printf '#!/bin/sh\nexit 0\n' > /usr/local/sbin/systemctl
 chmod +x /usr/local/sbin/systemctl
 
 # Install Proxmox Datacenter Manager
-apt-get update
-apt-get install -y --no-install-recommends \
-  proxmox-datacenter-manager \
-  proxmox-datacenter-manager-ui \
+
+if [[ "$TARGETARCH" == "amd64" ]]; then
+
+  # Add Proxmox Datacenter Manager repository
+  curl -sL https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg \
+       -o /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+  cat <<'DEB' | sed 's/^[[:space:]]*//' >/etc/apt/sources.list.d/pdm-no-subs.sources
+    Types: deb
+    URIs: http://download.proxmox.com/debian/pdm
+    Suites: trixie
+    Components: pdm-no-subscription
+    Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+DEB
+
+  apt-get update
+  apt-get install -y --no-install-recommends \
+    proxmox-datacenter-manager \
+    proxmox-datacenter-manager-ui \
+
+else
+
+ apt-get install -y --no-install-recommends \
+    git \
+    sudo \
+    dpkg-dev \
+    apt-transport-https
+
+  tmpdir="/tmp/deb"
+  rm -rf "$tmpdir"
+  mkdir -p "$tmpdir"
+
+  # Download packages from qemus/proxmox-datacenter-arm64
+  git clone --depth 1 https://github.com/qemus/proxmox-datacenter-arm64.git "$tmpdir" &&
+  (cd "$tmpdir" && ./build.sh "install=${VERSION_ARG}-1") &&
+  rm -rf "$tmpdir"
+
+  apt-get remove -y \
+    git \
+    dpkg-dev \
+    apt-transport-https
+
+fi
 
 # Remove enterprise repo added by Proxmox packages — keep only no-subscription
 rm -f /etc/apt/sources.list.d/pdm-enterprise.list \
