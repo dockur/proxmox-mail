@@ -102,10 +102,6 @@ chown "root:$user" "$dir" || :
 chown "root:root" "$dir/shmem" || :
 mount -t tmpfs -o rw tmpfs "$dir/shmem"
 
-# TODO:
-#
-# - Daily cron jobs
-
 # Generate keys
 keys="/etc/proxmox-datacenter-manager/auth"
 
@@ -136,12 +132,19 @@ if [ ! -f "$keys/api.key" ] || [ ! -f "$keys/api.pem" ]; then
   chown "root:$user" "$keys/api.pem"
 fi
 
+dir="/usr/libexec/proxmox"
+
 echo "Starting Postfix..."
 RELAY_HOST=${RELAY_HOST:-ext.home.local}
 sed -i "s/RELAY_HOST/$RELAY_HOST/" /etc/postfix/main.cf
 
 /etc/init.d/postfix start || ok=1
 read -r POSTFIX_PID < /var/spool/postfix/pid/master.pid
+
+echo "Starting supercronic..."
+echo "30 2 * * * $dir/proxmox-datacenter-manager-daily-update 2>&1 | tee -a /tmp/daily.log" > /docker.cron
+supercronic /docker.cron >/dev/null &
+CRON_PID=$!
 
 # Start rsyslog
 echo "Starting rsyslog..."
@@ -169,6 +172,7 @@ cleanup() {
   pids=(
     "$API_PID"
     "$PRIV_API_PID"
+    "$CRON_PID"
     "$POSTFIX_PID"
     "$RSYSLOG_PID"
   )
@@ -197,9 +201,7 @@ rm -f /proxmox.end
 _trap cleanup SIGTERM SIGINT
 
 # Start PDM Services
-dir="/usr/libexec/proxmox"
 echo "Starting proxmox-datacenter-privileged-api..."
-
 "$dir/proxmox-datacenter-privileged-api" &
 
 PRIV_API_PID=$!
