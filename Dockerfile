@@ -38,6 +38,7 @@ apt-get install -y --no-install-recommends \
   nfs-common \
   cifs-utils \
   traceroute \
+  supercronic \
   iputils-ping \
   netcat-openbsd \
   ca-certificates \
@@ -89,8 +90,7 @@ DEB
     proxmox-datacenter-manager \
     proxmox-datacenter-manager-ui \
 
-  # Prevent system updates
-  apt-mark hold proxmox-datacenter-manager proxmox-datacenter-manager-ui
+  apt-mark hold proxmox-datacenter-manager-ui
 
 else
 
@@ -116,10 +116,10 @@ else
     dpkg-dev \
     apt-transport-https
 
-  # Prevent system updates
-  apt-mark hold proxmox-datacenter-manager
-
 fi
+
+# Prevent system updates
+apt-mark hold proxmox-datacenter-manager
 
 # Remove enterprise repo added by Proxmox packages — keep only no-subscription
 rm -f /etc/apt/sources.list.d/pdm-enterprise.list \
