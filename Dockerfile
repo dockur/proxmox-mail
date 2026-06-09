@@ -3,7 +3,7 @@
 FROM debian:trixie-slim
 
 ARG TARGETARCH
-ARG VERSION_ARG="0.0"
+ARG VERSION_ARG="1.1.4"
 
 ARG DEBCONF_NOWARNINGS="yes"
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -102,8 +102,10 @@ else
   mkdir -p "$tmpdir"
 
   # Download packages from qemus/proxmox-datacenter-arm64
-  git clone --depth 1 https://github.com/qemus/proxmox-datacenter-arm64.git "$tmpdir" &&
-  (cd "$tmpdir" && ./build.sh "install=${VERSION_ARG}-1") &&
+  git clone --depth 1 https://github.com/qemus/proxmox-datacenter-arm64.git "$tmpdir"
+  chmod +x "$tmpdir/build.sh"
+
+  (cd "$tmpdir" && ./build.sh "install=${VERSION_ARG}")
   rm -rf "$tmpdir"
 
   apt-get remove -y \
