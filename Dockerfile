@@ -34,7 +34,6 @@ apt-get install -y --no-install-recommends \
   locales \
   rsyslog \
   postfix \
-  locales \
   iptables \
   iproute2 \
   ifupdown2 \
