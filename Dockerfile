@@ -28,10 +28,13 @@ apt-get install -y --no-install-recommends \
   htop \
   less \
   cpio \
+  iotop \
+  gnupg \
   procps \
   locales \
   rsyslog \
   postfix \
+  locales \
   iptables \
   iproute2 \
   ifupdown2 \
