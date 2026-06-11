@@ -88,6 +88,8 @@ DEB
   apt-get install -y --no-install-recommends \
     proxmox-datacenter-manager \
     proxmox-datacenter-manager-ui \
+    proxmox-datacenter-manager-docs \
+    proxmox-datacenter-manager-client
 
 else
 
@@ -115,7 +117,11 @@ else
 fi
 
 # Prevent system updates
-apt-mark hold proxmox-datacenter-manager proxmox-datacenter-manager-ui
+apt-mark hold \
+  proxmox-datacenter-manager \
+  proxmox-datacenter-manager-ui \
+  proxmox-datacenter-manager-docs \
+  proxmox-datacenter-manager-client
 
 # Install supercronic
 if [[ "$TARGETARCH" == "amd64" ]]; then
@@ -153,7 +159,7 @@ echo "root:root" | chpasswd
 
 # Redirect rsyslog
 sed -i '/.*imklog.*/d' /etc/rsyslog.conf && \
-    echo '*.* -/proc/1/fd/1' >> /etc/rsyslog.conf
+    echo '*.* -/proc/1/fd/' >> /etc/rsyslog.conf
 
 # Store version number
 echo "$VERSION_ARG" > /etc/version
