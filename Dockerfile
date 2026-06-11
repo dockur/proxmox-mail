@@ -28,6 +28,7 @@ apt-get install -y --no-install-recommends \
   htop \
   less \
   cpio \
+  dpkg \
   iotop \
   gnupg \
   procps \
