@@ -42,7 +42,6 @@ apt-get install -y --no-install-recommends \
   xfsprogs \
   e2fsprogs \
   net-tools \
-  nfs-utils \
   nfs-common \
   cifs-utils \
   traceroute \
