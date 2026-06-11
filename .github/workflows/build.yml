@@ -27,8 +27,8 @@ jobs:
         id: latest_tag
         with:
           variables: |
-            repo: proxmox-dm
-            owner: dockur
+            repo: proxmox-datacenter-arm64
+            owner: qemus
           query: |
             query tag($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
