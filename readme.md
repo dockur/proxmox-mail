@@ -93,7 +93,7 @@ volumes:
 Special thanks to [willmortimer](https://github.com/willmortimer), [wofferl](https://github.com/wofferl) and [LongQT-sea](https://github.com/LongQT-sea), this project would not exist without their invaluable work.
 
 ## Stars 🌟
-[![Stars](https://starchart.cc/dockur/proxmox-dm.svg?variant=adaptive)](https://starchart.cc/dockur/proxmox-dm)
+[![Stargazers](https://raw.githubusercontent.com/star-stats/stars/refs/heads/data/charts/dockur-proxmox-dm.svg)](https://github.com/dockur/proxmox-dm/stargazers)
 
 [build_url]: https://github.com/dockur/proxmox-dm/
 [hub_url]: https://hub.docker.com/r/dockurr/proxmox-dm/
