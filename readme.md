@@ -31,7 +31,7 @@ Proxmox Mail Gateway inside a Docker container.
 
 ```yaml
 services:
-  pdm:
+  pmg:
     hostname: pmg
     container_name: pmg
     image: dockurr/proxmox-mail
