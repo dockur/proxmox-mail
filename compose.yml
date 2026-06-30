@@ -1,15 +1,18 @@
 services:
-  pdm:
-    hostname: pdm
-    container_name: pdm
-    image: dockurr/proxmox-dm
+  pmg:
+    hostname: pmg
+    container_name: pmg
+    image: dockurr/proxmox-mail
     environment:
       PASSWORD: "root"
     ports:
-      - 8443:8443
+      - 25:25
+      - 26:26
+      - 8006:8006
     volumes:
-      - ./config:/etc/proxmox-datacenter-manager
-      - ./data:/var/lib/proxmox-datacenter-manager
+      - ./config:/etc/pmg
+      - ./data:/var/lib/pmg
+      - ./spool:/var/spool/pmg
+      - ./postgres:/var/lib/postgresql
     restart: always
-    privileged: true
     stop_grace_period: 2m
