@@ -62,6 +62,13 @@ chmod +x /usr/local/sbin/systemctl
 
 # Install Proxmox Mail Gateway
 
+apt-get update
+apt-get install -y --no-install-recommends \
+  postfix \
+  postgresql \
+  clamav-daemon \
+  clamav-freshclam
+
 if [[ "$TARGETARCH" == "amd64" ]]; then
 
   # Add Proxmox Mail Gateway repository
@@ -76,7 +83,6 @@ if [[ "$TARGETARCH" == "amd64" ]]; then
     Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
 DEB
 
-  apt-get update
   apt-get install -y --no-install-recommends \
     pmg-api \
     pmg-gui \
@@ -84,37 +90,45 @@ DEB
     pmg-i18n \
     pmg-log-tracker \
     proxmox-spamassassin \
-    postfix \
-    postgresql \
-    clamav-daemon \
-    clamav-freshclam
 
 else
 
-  # Add Proxmox Mail Gateway repository
-  curl -sL https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg \
-       -o /usr/share/keyrings/proxmox-archive-keyring.gpg
+  packages_url="http://download.proxmox.com/debian/pmg/dists/trixie/pmg-no-subscription/binary-amd64/Packages.gz"
 
-  cat <<'DEB' | sed 's/^[[:space:]]*//' >/etc/apt/sources.list.d/pmg-no-subs.sources
-    Types: deb
-    URIs: http://download.proxmox.com/debian/pmg
-    Suites: trixie
-    Components: pmg-no-subscription
-    Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
-DEB
+  tmpdir="/tmp/pmg-debs"
+  mkdir -p "$tmpdir"
 
-  apt-get update
-  apt-get install -y --no-install-recommends \
-    pmg-api \
-    pmg-gui \
-    pmg-docs \
-    pmg-i18n \
-    pmg-log-tracker \
-    proxmox-spamassassin \
-    postfix \
-    postgresql \
-    clamav-daemon \
-    clamav-freshclam
+  packages=(
+    pmg-api
+    pmg-gui
+    pmg-docs
+    pmg-i18n
+    pmg-log-tracker
+    proxmox-spamassassin
+  )
+
+  for pkg in "${packages[@]}"; do
+    file="$(
+      curl -fsSL "$packages_url" |
+        gzip -dc |
+        awk -v pkg="$pkg" '
+          $1 == "Package:" && $2 == pkg { found=1 }
+          found && $1 == "Architecture:" && $2 != "all" { found=0 }
+          found && $1 == "Filename:" { print $2; exit }
+        '
+    )"
+
+    if [ -z "$file" ]; then
+      echo "Could not find Architecture: all package: $pkg" >&2
+      exit 1
+    fi
+
+    curl -fL "http://download.proxmox.com/debian/pmg/$file" -o "$tmpdir/${pkg}.deb"
+
+  done
+
+  apt-get install -y --no-install-recommends "$tmpdir"/*.deb
+  rm -rf "$tmpdir"
 
 fi
 
