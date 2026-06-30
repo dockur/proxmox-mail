@@ -21,25 +21,42 @@ jobs:
       packages: write
       contents: read
     steps:
-      -
-        name: Get remote package data
+      - 
+        name: Run graphql query to get tag
+        uses: octokit/graphql-action@v3.x
+        id: latest_tag
+        with:
+          variables: |
+            repo: proxmox-mail-arm64
+            owner: qemus
+          query: |
+            query tag($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                refs(refPrefix: "refs/tags/", last: 1, orderBy: {field: TAG_COMMIT_DATE, direction: ASC}) {
+                  edges {
+                    node {
+                      name
+               } } } } }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - 
+        name: Parse tag from query output
         run: |
-          set -e -o pipefail
-          latest_tag=""; 
-          while read -r v; do {
-            [ -z "$latest_tag" ] || dpkg --compare-versions "$v" gt "$latest_tag"; } && latest_tag="$v"
-          done < <(curl -fsSL http://download.proxmox.com/debian/pmg/dists/trixie/pmg-no-subscription/binary-amd64/Packages.gz | \
-                   gzip -dc | awk '/^Package: proxmox-mailgateway$/ {f=1; next} f && /^Version:/ {print $2; f=0}')
-          
-          latest_tag="${latest_tag%-*}"
+          #!/bin/bash
+          latest_tag=$(echo '${{ steps.latest_tag.outputs.data }}' | jq '.repository.refs.edges[][].name' -r)
+          [ -z "$latest_tag" ] && echo "Tag not found!" && exit 1
+          [[ "$latest_tag" == "null" ]] && echo "Tag not found!" && exit 1
+          [[ "$latest_tag" = v* ]] && latest_tag="${latest_tag:1}"
           echo "Found tag: \"${latest_tag}\""
-          major="${latest_tag%%.*}"
-          minor="${latest_tag#*.}"
+          latest_version="${latest_tag%-*}"
+          major="${latest_version%%.*}"
+          minor="${latest_version#*.}"
           minor="${minor%%.*}"
           echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
           echo "latest_minor=$major.$minor" >> $GITHUB_ENV
           echo "latest_major=$major" >> $GITHUB_ENV
-      - 
+      -  
         name: Check if the tag exists locally
         uses: action-pack/tag-exists@v1
         id: checkTag
@@ -70,11 +87,11 @@ jobs:
           tags: |
             type=raw,value=latest,priority=100
             type=raw,value=${{ env.latest_major }},priority=250
-            type=raw,value=${{ env.latest_tag }},priority=450
+            type=raw,value=${{ env.latest_version }},priority=450
           labels: |
             org.opencontainers.image.title=${{ vars.NAME }}
         env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - 
         name: Set up Docker Buildx
         if: env.exists == 'false'
@@ -102,7 +119,7 @@ jobs:
           context: .
           push: true
           provenance: false
-          platforms: linux/arm64
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
