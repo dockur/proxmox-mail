@@ -1,6 +1,6 @@
-<h1 align="center">Proxmox Datacenter Manager<br />
+<h1 align="center">Proxmox Mail Gateway<br />
 <div align="center">
-<a href="https://github.com/dockur/proxmox-dm/"><img src="https://github.com/dockur/proxmox-dm/raw/master/.github/logo.png" title="Logo" style="max-width:100%;" width="128" /></a>
+<a href="https://github.com/dockur/proxmox-mail/"><img src="https://github.com/dockur/proxmox-mail/raw/master/.github/logo.png" title="Logo" style="max-width:100%;" width="128" /></a>
 </div>
 <div align="center">
 
@@ -12,7 +12,7 @@
 
 </div></h1>
 
-Proxmox Datacenter Manager inside a Docker container.
+Proxmox Mail Gateway inside a Docker container.
 
 ## Features ✨
 
@@ -30,9 +30,9 @@ Proxmox Datacenter Manager inside a Docker container.
 ```yaml
 services:
   pdm:
-    hostname: pdm
-    container_name: pdm
-    image: dockurr/proxmox-dm
+    hostname: pmg
+    container_name: pmg
+    image: dockurr/proxmox-mail
     environment:
       PASSWORD: "root"
     ports:
@@ -48,17 +48,17 @@ services:
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pdm --hostname pdm --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-dm
+docker run -it --rm --name pmg --hostname pmg --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-mail
 ```
 
 ##### Via Github Codespaces:
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dockur/proxmox-dm)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dockur/proxmox-mail)
 
 ## Screenshot 📸
 
 <div align="center">
-<a href="https://github.com/dockur/proxmox-dm"><img src="https://raw.githubusercontent.com/dockur/proxmox-dm/master/.github/screenshot.png" title="Screenshot" style="max-width:100%;" width="256" /></a>
+<a href="https://github.com/dockur/proxmox-mail"><img src="https://raw.githubusercontent.com/dockur/proxmox-mail/master/.github/screenshot.png" title="Screenshot" style="max-width:100%;" width="256" /></a>
 </div>
 
 ## FAQ 💬
@@ -94,15 +94,15 @@ volumes:
 Special thanks to [willmortimer](https://github.com/willmortimer), [wofferl](https://github.com/wofferl) and [LongQT-sea](https://github.com/LongQT-sea), this project would not exist without their invaluable work.
 
 ## Stars 🌟
-[![Stargazers](https://raw.githubusercontent.com/star-stats/stars/refs/heads/data/charts/dockur-proxmox-dm.svg)](https://github.com/dockur/proxmox-dm/stargazers)
+[![Stargazers](https://raw.githubusercontent.com/star-stats/stars/refs/heads/data/charts/dockur-proxmox-mail.svg)](https://github.com/dockur/proxmox-mail/stargazers)
 
-[build_url]: https://github.com/dockur/proxmox-dm/
-[hub_url]: https://hub.docker.com/r/dockurr/proxmox-dm/
-[tag_url]: https://hub.docker.com/r/dockurr/proxmox-dm/tags
-[pkg_url]: https://github.com/dockur/proxmox-dm/pkgs/container/proxmox-dm
+[build_url]: https://github.com/dockur/proxmox-maik/
+[hub_url]: https://hub.docker.com/r/dockurr/proxmox-mail/
+[tag_url]: https://hub.docker.com/r/dockurr/proxmox-mail/tags
+[pkg_url]: https://github.com/dockur/proxmox-mail/pkgs/container/proxmox-mail
 
-[Build]: https://github.com/dockur/proxmox-dm/actions/workflows/build.yml/badge.svg
-[Size]: https://img.shields.io/docker/image-size/dockurr/proxmox-dm/latest?color=066da5&label=size
-[Pulls]: https://img.shields.io/docker/pulls/dockurr/proxmox-dm.svg?style=flat&label=pulls&logo=docker
-[Version]: https://img.shields.io/docker/v/dockurr/proxmox-dm/latest?arch=amd64&sort=semver&color=066da5
-[Package]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fipitio.github.io%2Fbackage%2Fdockur%2Fproxmox-dm%2Fproxmox-dm.json&query=%24.downloads&logo=github&style=flat&color=066da5&label=pulls
+[Build]: https://github.com/dockur/proxmox-mail/actions/workflows/build.yml/badge.svg
+[Size]: https://img.shields.io/docker/image-size/dockurr/proxmox-mail/latest?color=066da5&label=size
+[Pulls]: https://img.shields.io/docker/pulls/dockurr/proxmox-mail.svg?style=flat&label=pulls&logo=docker
+[Version]: https://img.shields.io/docker/v/dockurr/proxmox-mail/latest?arch=amd64&sort=semver&color=066da5
+[Package]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fipitio.github.io%2Fbackage%2Fdockur%2Fproxmox-mail%2Fproxmox-mail.json&query=%24.downloads&logo=github&style=flat&color=066da5&label=pulls
