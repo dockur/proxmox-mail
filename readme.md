@@ -30,14 +30,7 @@ Proxmox Mail Gateway inside a Docker container.
 - **Extensive API** - Includes REST API for seamless integration with other hosting systems and custom tools.
 
 ## Usage  🐳
-EXPOSE 25
-EXPOSE 26
-EXPOSE 8006
 
-VOLUME /etc/pmg
-VOLUME /var/lib/pmg
-VOLUME /var/spool/pmg
-VOLUME /var/lib/postgresql
 ##### Via Docker Compose:
 
 ```yaml
