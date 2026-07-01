@@ -122,11 +122,16 @@ EOF
     fi
   } >/etc/resolv.conf
 
+  PMG_HOSTNAME="$short"
+  PMG_MAIL_DOMAIN="$mail_domain"
+  PMG_FQDN="$fqdn"
+
   # Seed Postfix too, but pmgconfig sync may overwrite this from templates.
   postconf -e "myhostname = $fqdn" || :
   postconf -e "mydomain = $mail_domain" || :
   postconf -e "myorigin = \$mydomain" || :
 }
+
 # Check environment
 [ "$(id -u)" -ne "0" ] && error "Script must be executed with root privileges." && exit 11
 [ ! -f "/usr/local/bin/entrypoint.sh" ] && error "Script must be run inside the container!" && exit 12
@@ -373,6 +378,9 @@ fi
 
 # Configure hostname/domain before PMG generates Postfix configuration.
 configure_hostname
+
+pmgconfig set --section dns --hostname "${DOMAIN%%.*}" || :
+pmgconfig set --section dns --domain "${DOMAIN#*.}" || :
 
 # Initialize PMG configuration and database
 echo "Initializing PMG configuration..."
