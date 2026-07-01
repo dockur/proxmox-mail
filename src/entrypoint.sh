@@ -469,7 +469,7 @@ chmod 0750 /var/lib/pmg/spamassassin 2>/dev/null || :
 chmod 0700 /var/lib/pmg/spamassassin/.razor 2>/dev/null || :
 
 echo "PMG DNS configuration:"
-pmgconfig dump | grep -E '^dns\.(hostname|domain|fqdn)' || true
+pmgconfig dump | grep -Ei 'dns|hostname|domain|fqdn' || true
 
 echo "Syncing PMG configuration..."
 pmgconfig sync
