@@ -36,6 +36,7 @@ services:
     image: dockurr/proxmox-mail
     environment:
       PASSWORD: "root"
+      DOMAIN: "pmg.example.com"
     ports:
       - 25:25
       - 26:26
@@ -52,7 +53,7 @@ services:
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pmg --hostname pmg -e "PASSWORD=root" -p 25:25 -p 26:26 -p 8006:8006 -v "${PWD:-.}/config:/etc/pmg" -v "${PWD:-.}/data:/var/lib/pmg" -v "${PWD:-.}/spool:/var/spool/pmg" -v "${PWD:-.}/postgres:/var/lib/postgresql" --stop-timeout 120 docker.io/dockurr/proxmox-mail
+docker run -it --rm --name pmg --hostname pmg -e "PASSWORD=root" -e "DOMAIN=pmg.example.com" -p 25:25 -p 26:26 -p 8006:8006 -v "${PWD:-.}/config:/etc/pmg" -v "${PWD:-.}/data:/var/lib/pmg" -v "${PWD:-.}/spool:/var/spool/pmg" -v "${PWD:-.}/postgres:/var/lib/postgresql" --stop-timeout 120 docker.io/dockurr/proxmox-mail
 ```
 
 ##### Via Github Codespaces:
