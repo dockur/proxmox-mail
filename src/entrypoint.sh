@@ -4,7 +4,7 @@ set -Eeuo pipefail
 # Docker environment variables
 : "${DEBUG:="N"}"            # Enable debugging
 : "${PASSWORD:="root"}"      # Default password
-: "${DOMAIN:="${HOSTNAME:-pmg.local}"}"  # FQDN
+: "${DOMAIN:="pmg.local"}"   # FQDN for mailserver
 
 # Optional service toggles
 : "${CLAMAV:="Y"}"           # Start clamd for virus scanning
@@ -68,6 +68,65 @@ read_pidfile() {
   return 1
 }
 
+configure_hostname() {
+  local fqdn="$DOMAIN"
+  local short
+  local mail_domain
+  local nameservers
+
+  if [[ "$fqdn" == *.* ]]; then
+    short="${fqdn%%.*}"
+    mail_domain="${fqdn#*.}"
+  else
+    short="$fqdn"
+    mail_domain="local"
+    fqdn="$short.$mail_domain"
+    DOMAIN="$fqdn"
+  fi
+
+  if [ -z "$short" ] || [ -z "$mail_domain" ] || [ "$short" = "$mail_domain" ]; then
+    error "Invalid DOMAIN setting: DOMAIN='$DOMAIN'"
+    exit 22
+  fi
+
+  echo "Configuring hostname: $fqdn"
+
+  echo "$short" > /etc/hostname
+  echo "$fqdn" > /etc/mailname
+
+  sed -i \
+    -e "/[[:space:]]$short[[:space:]]*/d" \
+    -e "/[[:space:]]$fqdn[[:space:]]*/d" \
+    /etc/hosts 2>/dev/null || :
+
+  cat >>/etc/hosts <<EOF
+127.0.1.1 $fqdn $short
+EOF
+
+  # PMG derives dns.domain from the resolver search domain.
+  # Without this, pmgconfig sync can generate "mydomain =".
+  nameservers="$(
+    awk '
+      $1 == "nameserver" { print }
+    ' /etc/resolv.conf 2>/dev/null || true
+  )"
+
+  {
+    echo "search $mail_domain"
+
+    if [ -n "$nameservers" ]; then
+      printf '%s\n' "$nameservers"
+    else
+      echo "nameserver 1.1.1.1"
+      echo "nameserver 8.8.8.8"
+    fi
+  } >/etc/resolv.conf
+
+  # Seed Postfix too, but pmgconfig sync may overwrite this from templates.
+  postconf -e "myhostname = $fqdn" || :
+  postconf -e "mydomain = $mail_domain" || :
+  postconf -e "myorigin = \$mydomain" || :
+}
 # Check environment
 [ "$(id -u)" -ne "0" ] && error "Script must be executed with root privileges." && exit 11
 [ ! -f "/usr/local/bin/entrypoint.sh" ] && error "Script must be run inside the container!" && exit 12
@@ -393,66 +452,6 @@ chown -R www-data:www-data /var/lib/pmg/spamassassin 2>/dev/null || :
 chmod 0750 /var/lib/pmg 2>/dev/null || :
 chmod 0750 /var/lib/pmg/spamassassin 2>/dev/null || :
 chmod 0700 /var/lib/pmg/spamassassin/.razor 2>/dev/null || :
-
-configure_hostname() {
-  local fqdn="$DOMAIN"
-  local short
-  local mail_domain
-  local nameservers
-
-  if [[ "$fqdn" == *.* ]]; then
-    short="${fqdn%%.*}"
-    mail_domain="${fqdn#*.}"
-  else
-    short="$fqdn"
-    mail_domain="local"
-    fqdn="$short.$mail_domain"
-    DOMAIN="$fqdn"
-  fi
-
-  if [ -z "$short" ] || [ -z "$mail_domain" ] || [ "$short" = "$mail_domain" ]; then
-    error "Invalid DOMAIN setting: DOMAIN='$DOMAIN'"
-    exit 22
-  fi
-
-  echo "Configuring hostname: $fqdn"
-
-  echo "$short" > /etc/hostname
-  echo "$fqdn" > /etc/mailname
-
-  sed -i \
-    -e "/[[:space:]]$short[[:space:]]*/d" \
-    -e "/[[:space:]]$fqdn[[:space:]]*/d" \
-    /etc/hosts 2>/dev/null || :
-
-  cat >>/etc/hosts <<EOF
-127.0.1.1 $fqdn $short
-EOF
-
-  # PMG derives dns.domain from the resolver search domain.
-  # Without this, pmgconfig sync can generate "mydomain =".
-  nameservers="$(
-    awk '
-      $1 == "nameserver" { print }
-    ' /etc/resolv.conf 2>/dev/null || true
-  )"
-
-  {
-    echo "search $mail_domain"
-
-    if [ -n "$nameservers" ]; then
-      printf '%s\n' "$nameservers"
-    else
-      echo "nameserver 1.1.1.1"
-      echo "nameserver 8.8.8.8"
-    fi
-  } >/etc/resolv.conf
-
-  # Seed Postfix too, but pmgconfig sync may overwrite this from templates.
-  postconf -e "myhostname = $fqdn" || :
-  postconf -e "mydomain = $mail_domain" || :
-  postconf -e "myorigin = \$mydomain" || :
-}
 
 echo "PMG DNS configuration:"
 pmgconfig dump | grep -E '^dns\.(hostname|domain|fqdn)' || true
