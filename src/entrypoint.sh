@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # Docker environment variables
-: "${DEBUG:="N"}"            # Enable shell debugging with DEBUG=Y
+: "${DEBUG:="N"}"            # Enable shell debugging
 : "${PASSWORD:="root"}"      # Default password
 
 # Optional service toggles
@@ -23,10 +23,6 @@ is_enabled() {
     *) return 1 ;;
   esac
 }
-
-if is_enabled "$DEBUG"; then
-  set -x
-fi
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -707,7 +703,7 @@ fi
 # Final readiness check.
 #
 # This does not hard-fail the container, but gives clear diagnostics.
-echo "Checking PMG readiness..."
+echo "Checking Mail Gateway readiness..."
 
 if command -v ss >/dev/null 2>&1; then
   for _ in $(seq 1 60); do
