@@ -16,12 +16,14 @@ Proxmox Mail Gateway inside a Docker container.
 
 ## Features ✨
 
-- **Centralized management** — Manage any number of [Proxmox VE](https://github.com/dockur/proxmox/) nodes using a modern web-interface
-- **Resource monitoring** — A global dashboard visualizes the state of every node, highlighting potential issues
-- **Easy backups** — Stores all your configuration in a volume mount, for easy backup and restore
-- **Task aggregation** — Centralized access to task logs across the entire infrastructure for auditing and troubleshooting
-- **Cross-cluster migration** — Execute live migrations of virtual guests between nodes
-- **Update management** — Monitor available updates and security patches across the whole fleet
+- **Centralized Web GUI** - Manage all incoming and outgoing email traffic from a single, intuitive interface.
+- **Antivirus Engine** - Integrates ClamAV to detect Trojans, malware, and other malicious threats.
+- **Spam Quarantine** - Safe, user-accessible quarantine area to hold identified spam mails, with mobile-friendly access.
+- **Rule System & Mail Flow** - Object-Oriented Rule System: Create highly customizable rules based on senders, recipients, content, and time.
+- **DKIM Signing** - Optionally sign outgoing emails with DKIM to ensure authenticity and improve deliverability.
+- **Outbound Protection** - Scans outgoing emails to prevent your server from being blacklisted and maintains IP reputation.
+- **Authentication** - Supports standard Linux PAM, single sign-on (SSO) via OpenID Connect, and Two-Factor Authentication (TOTP/WebAuthn) for secure admin access.
+- **Extensive API** - Includes REST API for seamless integration with other hosting systems and custom tools.
 
 ## Usage  🐳
 
@@ -29,26 +31,29 @@ Proxmox Mail Gateway inside a Docker container.
 
 ```yaml
 services:
-  pdm:
+  pmg:
     hostname: pmg
     container_name: pmg
     image: dockurr/proxmox-mail
     environment:
       PASSWORD: "root"
     ports:
-      - 8443:8443
+      - 25:25
+      - 26:26
+      - 8006:8006
     volumes:
-      - ./config:/etc/proxmox-datacenter-manager
-      - ./data:/var/lib/proxmox-datacenter-manager
+      - ./config:/etc/pmg
+      - ./data:/var/lib/pmg
+      - ./spool:/var/spool/pmg
+      - ./postgres:/var/lib/postgresql
     restart: always
-    privileged: true
     stop_grace_period: 2m
 ```
 
 ##### Via Docker CLI:
 
 ```bash
-docker run -it --rm --name pmg --hostname pmg --privileged -e "PASSWORD=root" -p 8443:8443 -v "${PWD:-.}/config:/etc/proxmox-datacenter-manager" -v "${PWD:-.}/data:/var/lib/proxmox-datacenter-manager" --stop-timeout 120 docker.io/dockurr/proxmox-mail
+docker run -it --rm --name pmg --hostname pmg -e "PASSWORD=root" -p 25:25 -p 26:26 -p 8006:8006 -v "${PWD:-.}/config:/etc/pmg" -v "${PWD:-.}/data:/var/lib/pmg" -v "${PWD:-.}/spool:/var/spool/pmg" -v "${PWD:-.}/postgres:/var/lib/postgresql" --stop-timeout 120 docker.io/dockurr/proxmox-mail
 ```
 
 ##### Via Github Codespaces:
@@ -67,36 +72,34 @@ docker run -it --rm --name pmg --hostname pmg --privileged -e "PASSWORD=root" -p
 
   Very simple! These are the steps:
   
-  - Start the container and connect to [port 8443](http://127.0.0.1:8443/) using your web browser.
+  - Start the container and connect to [port 8006](http://127.0.0.1:8006/) using your web browser.
 
   - Login using the username `root` and the password you specified in the `PASSWORD` environment variable.
   
-  Enjoy your time with your brand new Proxmox Datacenter Manager, and don't forget to star this repo!
+  Enjoy your time with your brand new Proxmox Mail Gateway, and don't forget to star this repo!
 
 ### How do I change the location of the configuration data?
 
-  To change the location of the configuration data, include the following two bind mounts in your compose file:
+  To change the location of the configuration data, include the following four bind mounts in your compose file:
 
   ```yaml
 volumes:
-  - ./config:/etc/proxmox-datacenter-manager
-  - ./data:/var/lib/proxmox-datacenter-manager
+  - ./config:/etc/pmg
+  - ./data:/var/lib/pmg
+  - ./spool:/var/spool/pmg
+  - ./postgres:/var/lib/postgresql
   ```
 
-  Replace the example paths `./config` and `./data` with the desired folders or named volumes.
+  Replace the example paths with the desired folders or named volumes.
 
 ### Are there containers available for other Proxmox products?
 
-  Yes, see our [Proxmox VE](https://github.com/dockur/proxmox) and [Proxmox Backup Server](https://github.com/dockur/proxmox-backup) containers.
-
-## Acknowledgements 🙏
-
-Special thanks to [willmortimer](https://github.com/willmortimer), [wofferl](https://github.com/wofferl) and [LongQT-sea](https://github.com/LongQT-sea), this project would not exist without their invaluable work.
+  Yes, see our [Proxmox VE](https://github.com/dockur/proxmox), [Proxmox Backup Server](https://github.com/dockur/proxmox-backup) and [Proxmox Datacenter Manager](https://github.com/dockur/proxmox-dm) containers.
 
 ## Stars 🌟
 [![Stargazers](https://raw.githubusercontent.com/star-stats/stars/refs/heads/data/charts/dockur-proxmox-mail.svg)](https://github.com/dockur/proxmox-mail/stargazers)
 
-[build_url]: https://github.com/dockur/proxmox-maik/
+[build_url]: https://github.com/dockur/proxmox-mail/
 [hub_url]: https://hub.docker.com/r/dockurr/proxmox-mail/
 [tag_url]: https://hub.docker.com/r/dockurr/proxmox-mail/tags
 [pkg_url]: https://github.com/dockur/proxmox-mail/pkgs/container/proxmox-mail

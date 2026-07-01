@@ -1,9 +1,9 @@
 {
   "name": "Proxmox",
   "service": "proxmox",
-  "forwardPorts": [8443],
+  "forwardPorts": [8006],
   "portsAttributes": {
-    "8443": {
+    "8006": {
       "label": "Web",
       "onAutoForward": "notify"
     }
