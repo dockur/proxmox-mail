@@ -746,14 +746,32 @@ PMGPROXY_PID=$!
 wait_process_alive "$PMGPROXY_PID" "pmgproxy" 1 || cleanup
 
 echo "Starting pmg-smtp-filter..."
-pmg-smtp-filter start --debug 1 &
-PMGSMTPFILTER_PID=$!
-wait_process_alive "$PMGSMTPFILTER_PID" "pmg-smtp-filter" 1 || cleanup
+pmg-smtp-filter start
+PMGSMTPFILTER_PID=""
+
+if read_pidfile /run/pmg-smtp-filter.pid /var/run/pmg-smtp-filter.pid; then
+  PMGSMTPFILTER_PID="$REPLY"
+fi
+
+if [ -z "$PMGSMTPFILTER_PID" ]; then
+  warn "Could not read pmg-smtp-filter PID file."
+else
+  wait_process_alive "$PMGSMTPFILTER_PID" "pmg-smtp-filter" 1 || cleanup
+fi
 
 echo "Starting pmgpolicy..."
-pmgpolicy start --debug 1 &
-PMGPOLICY_PID=$!
-wait_process_alive "$PMGPOLICY_PID" "pmgpolicy" 1 || cleanup
+pmgpolicy start
+PMGPOLICY_PID=""
+
+if read_pidfile /run/pmgpolicy.pid /var/run/pmgpolicy.pid; then
+  PMGPOLICY_PID="$REPLY"
+fi
+
+if [ -z "$PMGPOLICY_PID" ]; then
+  warn "Could not read pmgpolicy PID file."
+else
+  wait_process_alive "$PMGPOLICY_PID" "pmgpolicy" 1 || cleanup
+fi
 
 PMGMIRROR_PID=""
 
