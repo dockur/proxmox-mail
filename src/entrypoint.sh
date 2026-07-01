@@ -156,7 +156,17 @@ fi
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
 
-PG_VERSION="$(ls /usr/lib/postgresql | sort -V | tail -n1)"
+PG_VERSION="$(
+  find /usr/lib/postgresql -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
+    sort -V |
+    tail -n1
+)"
+
+if [ -z "$PG_VERSION" ]; then
+  error "No PostgreSQL version directory found in /usr/lib/postgresql."
+  exit 19
+fi
+
 PG_CLUSTER="main"
 PG_DATA="/var/lib/postgresql/$PG_VERSION/$PG_CLUSTER"
 
@@ -281,7 +291,6 @@ cleanup() {
 
 # Init trap
 rm -f /proxmox.end
-TRAP_PID=$BASHPID
 _trap cleanup SIGTERM SIGINT
 
 # Start PMG services without systemd.
