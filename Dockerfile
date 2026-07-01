@@ -40,7 +40,6 @@ apt-get install -y --no-install-recommends \
   clamav-daemon \
   netcat-openbsd \
   ca-certificates \
-  libarchive-perl \
   clamav-freshclam
 
 # Prevent services from starting during install
