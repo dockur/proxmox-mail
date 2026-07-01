@@ -334,7 +334,7 @@ restored=0
 
 if [ -d "$PMG_VARLIB_SRC" ]; then
   while IFS= read -r -d '' src; do
-    rel="${src#$PMG_VARLIB_SRC/}"
+    rel="${src#"$PMG_VARLIB_SRC"/}"
     dst="$PMG_VARLIB_DST/$rel"
 
     if [ ! -e "$dst" ]; then
