@@ -329,32 +329,53 @@ PMG_VARLIB_SRC="/usr/share/pmg/var-lib-pmg.dist"
 PMG_VARLIB_DST="/var/lib/pmg"
 
 mkdir -p "$PMG_VARLIB_DST"
+mkdir -p /etc/pmg/templates
+
+# This backup must exist in the image. If it does not, the Dockerfile did not
+# copy /var/lib/pmg before the volume mounted over it at runtime.
+if [ ! -f "$PMG_VARLIB_SRC/templates/main.cf.in" ]; then
+  error "PMG packaged file backup missing: $PMG_VARLIB_SRC/templates/main.cf.in"
+  echo "This means the Docker image was not built with the /var/lib/pmg backup."
+  echo "Fix the Dockerfile backup block and rebuild the image."
+  echo ""
+  echo "Debug output:"
+  find /usr/share/pmg -maxdepth 4 -type f 2>/dev/null | sort || true
+  find /var/lib/pmg -maxdepth 4 -type f 2>/dev/null | sort || true
+  dpkg -S /var/lib/pmg/templates/main.cf.in 2>/dev/null || true
+  exit 20
+fi
 
 restored=0
 
-if [ -d "$PMG_VARLIB_SRC" ]; then
-  while IFS= read -r -d '' src; do
-    rel="${src#"$PMG_VARLIB_SRC"/}"
-    dst="$PMG_VARLIB_DST/$rel"
+while IFS= read -r -d '' src; do
+  rel="${src#"$PMG_VARLIB_SRC"/}"
+  dst="$PMG_VARLIB_DST/$rel"
 
-    if [ ! -e "$dst" ]; then
-      if [ "$restored" -eq 0 ]; then
-        echo "Restoring missing PMG packaged files from $PMG_VARLIB_SRC..."
-      fi
-
-      mkdir -p "$(dirname "$dst")"
-      cp -a "$src" "$dst"
-      restored=$((restored + 1))
+  if [ ! -e "$dst" ]; then
+    if [ "$restored" -eq 0 ]; then
+      echo "Restoring missing PMG packaged files from $PMG_VARLIB_SRC..."
     fi
-  done < <(find "$PMG_VARLIB_SRC" -type f -print0)
-fi
+
+    mkdir -p "$(dirname "$dst")"
+    cp -a "$src" "$dst"
+    restored=$((restored + 1))
+  fi
+done < <(find "$PMG_VARLIB_SRC" -type f -print0)
 
 if [ "$restored" -gt 0 ]; then
   echo "Restored $restored PMG packaged file(s)."
 fi
 
-# Ensure custom template directory exists.
-mkdir -p /etc/pmg/templates
+# Hard check for the known required Postfix template.
+if [ ! -f "$PMG_VARLIB_DST/templates/main.cf.in" ]; then
+  error "PMG template missing after restore: $PMG_VARLIB_DST/templates/main.cf.in"
+  echo ""
+  echo "Debug output:"
+  find "$PMG_VARLIB_DST" -maxdepth 4 -type f 2>/dev/null | sort || true
+  find "$PMG_VARLIB_SRC" -maxdepth 4 -type f 2>/dev/null | sort || true
+  dpkg -S "$PMG_VARLIB_DST/templates/main.cf.in" 2>/dev/null || true
+  exit 21
+fi
 
 chown -R root:www-data "$PMG_VARLIB_DST/templates" 2>/dev/null || :
 chmod -R u=rwX,g=rX,o= "$PMG_VARLIB_DST/templates" 2>/dev/null || :
