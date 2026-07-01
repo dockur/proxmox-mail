@@ -27,6 +27,7 @@ apt-get install -y --no-install-recommends \
   htop \
   less \
   dpkg \
+  sudo \
   gnupg \
   procps \
   locales \
@@ -93,7 +94,6 @@ else
 
   apt-get install -y --no-install-recommends \
     git \
-    sudo \
     dpkg-dev \
     apt-transport-https
 
@@ -107,9 +107,8 @@ else
   (cd "$tmpdir" && ./build.sh "install=${VERSION_ARG}")
   rm -rf "$tmpdir"
 
-  SUDO_FORCE_REMOVE=yes apt-get remove -y \
+  apt-get remove -y \
     git \
-    sudo \
     dpkg-dev \
     apt-transport-https
 
