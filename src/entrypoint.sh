@@ -214,29 +214,25 @@ mkdir -p /var/lib/pmg/templates
 mkdir -p /etc/pmg/templates
 
 if [ ! -f /var/lib/pmg/templates/main.cf.in ]; then
-  found_template="$(
-    find /usr/share /var/lib /etc \
-      -path '*pmg*' \
-      -name main.cf.in \
-      -type f \
-      2>/dev/null |
-      head -n1
-  )"
-
-  if [ -n "$found_template" ]; then
-    echo "Restoring PMG templates from $(dirname "$found_template")..."
-    cp -a "$(dirname "$found_template")/." /var/lib/pmg/templates/
+  if [ -f /usr/share/pmg/templates.dist/main.cf.in ]; then
+    echo "Restoring PMG templates from /usr/share/pmg/templates.dist..."
+    cp -a /usr/share/pmg/templates.dist/. /var/lib/pmg/templates/
   fi
 fi
 
 if [ ! -f /var/lib/pmg/templates/main.cf.in ]; then
   error "PMG template missing: /var/lib/pmg/templates/main.cf.in"
-  echo "This usually means the image is missing the PMG template files."
+  echo "The package database says the file belongs to pmg-api, but it is not visible at runtime."
+  echo "This usually means /var/lib/pmg is mounted as a volume and hides packaged files."
+  echo ""
   echo "Debug output:"
-  dpkg -S main.cf.in 2>/dev/null || true
-  find / -name main.cf.in -type f 2>/dev/null || true
+  dpkg -S /var/lib/pmg/templates/main.cf.in 2>/dev/null || true
+  find /var/lib/pmg -maxdepth 3 -type f | sort || true
   exit 20
 fi
+
+chown -R root:www-data /var/lib/pmg/templates || :
+chmod -R u=rwX,g=rX,o= /var/lib/pmg/templates || :
 
 echo "Syncing PMG configuration..."
 pmgconfig sync
