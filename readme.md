@@ -16,17 +16,17 @@ Proxmox Mail Gateway inside a Docker container.
 
 ## Features ✨
 
-- **Centralized Web GUI** - Manage all incoming and outgoing email traffic from a single, intuitive interface.
-- **Antivirus Engine** - Integrates ClamAV to detect Trojans, malware, and other malicious threats.
-- **Spam Quarantine** - Safe, user-accessible quarantine area to hold identified spam mails, with mobile-friendly access.
-- **Rule System & Mail Flow** - Object-Oriented Rule System: Create highly customizable rules based on senders, recipients, content, and time.
-- **DKIM Signing** - Optionally sign outgoing emails with DKIM to ensure authenticity and improve deliverability.
-- **Outbound Protection** - Scans outgoing emails to prevent your server from being blacklisted and maintains IP reputation.
-- **Authentication** - Supports standard Linux PAM, single sign-on (SSO) via OpenID Connect, and Two-Factor Authentication (TOTP/WebAuthn) for secure admin access.
+  - **Centralized Web GUI** - Manage all incoming and outgoing email traffic from a single, intuitive interface.
+  - **Antivirus Engine** - Integrates ClamAV to detect Trojans, malware, and other malicious threats.
+  - **Spam Quarantine** - Safe, user-accessible quarantine area to hold identified spam mails, with mobile-friendly access.
+  - **Rule System & Mail Flow** - Object-Oriented Rule System: Create highly customizable rules based on senders, recipients, content, and time.
+  - **DKIM Signing** - Optionally sign outgoing emails with DKIM to ensure authenticity and improve deliverability.
+  - **Outbound Protection** - Scans outgoing emails to prevent your server from being blacklisted and maintains IP reputation.
+  - **Authentication** - Supports standard Linux PAM, single sign-on (SSO) via OpenID Connect, and Two-Factor Authentication (TOTP/WebAuthn) for secure admin access.
 
 ## Usage  🐳
 
-##### Via Docker Compose:
+##### Docker Compose:
 
 ```yaml
 services:
@@ -50,13 +50,13 @@ services:
     stop_grace_period: 2m
 ```
 
-##### Via Docker CLI:
+##### Docker CLI:
 
 ```bash
 docker run -it --rm --name pmg --hostname pmg -e "PASSWORD=root" -e "DOMAIN=pmg.example.com" -p 25:25 -p 26:26 -p 8006:8006 -v "${PWD:-.}/config:/etc/pmg" -v "${PWD:-.}/data:/var/lib/pmg" -v "${PWD:-.}/spool:/var/spool/pmg" -v "${PWD:-.}/postgres:/var/lib/postgresql" --stop-timeout 120 docker.io/dockurr/proxmox-mail
 ```
 
-##### Via GitHub Codespaces:
+##### GitHub Codespaces:
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dockur/proxmox-mail)
 
