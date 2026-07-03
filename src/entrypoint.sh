@@ -95,8 +95,8 @@ configure_hostname() {
   echo "$fqdn" > /etc/mailname
 
   sed -i \
-    -e "/[[:space:]]$short[[:space:]]*/d" \
-    -e "/[[:space:]]$fqdn[[:space:]]*/d" \
+    -e "/[[:space:]]${short}[[:space:]]*/d" \
+    -e "/[[:space:]]${fqdn}[[:space:]]*/d" \
     /etc/hosts 2>/dev/null || :
 
   cat >>/etc/hosts <<EOF
