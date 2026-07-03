@@ -132,6 +132,27 @@ EOF
   postconf -e "myorigin = \$mydomain" || :
 }
 
+detect_domain_change() {
+  DOMAIN_STATE_FILE="/etc/pmg/.docker-domain"
+  OLD_DOMAIN=""
+
+  if [ -f "$DOMAIN_STATE_FILE" ]; then
+    OLD_DOMAIN="$(cat "$DOMAIN_STATE_FILE" 2>/dev/null || true)"
+  fi
+
+  DOMAIN_CHANGED="N"
+
+  if [ "$OLD_DOMAIN" != "$PMG_FQDN" ]; then
+    DOMAIN_CHANGED="Y"
+
+    if [ -n "$OLD_DOMAIN" ]; then
+      echo "Domain changed from '$OLD_DOMAIN' to '$PMG_FQDN'."
+    else
+      echo "Initializing domain state for '$PMG_FQDN'."
+    fi
+  fi
+}
+
 # Check environment
 [ "$(id -u)" -ne "0" ] && error "Script must be executed with root privileges." && exit 11
 [ ! -f "/usr/local/bin/entrypoint.sh" ] && error "Script must be run inside the container!" && exit 12
@@ -369,18 +390,26 @@ fi
 # Configure hostname/domain before PMG generates Postfix configuration.
 configure_hostname
 
-# Initialize PMG configuration and database
+# Initialize PMG configuration and database.
 echo "Initializing PMG configuration..."
 pmgconfig init
 
-# Generate PMG certificates after hostname/domain configuration exists.
-if [[ ! -f "$keys/pmg-api.pem" ]]; then
+# Detect if DOMAIN changed compared to the previous container start.
+detect_domain_change
+
+# Regenerate PMG certificates when missing or when DOMAIN changed.
+#
+# These certificates are domain-sensitive, but the PMG auth keys and CSRF key
+# should not be regenerated because they are persistent identity/state.
+if [[ ! -f "$keys/pmg-api.pem" ]] || is_enabled "$DOMAIN_CHANGED"; then
   info "Generating API certificate..."
+  rm -f "$keys/pmg-api.pem"
   pmgconfig apicert
 fi
 
-if [[ ! -f "$keys/pmg-tls.pem" ]]; then
+if [[ ! -f "$keys/pmg-tls.pem" ]] || is_enabled "$DOMAIN_CHANGED"; then
   info "Generating SMTP TLS certificate..."
+  rm -f "$keys/pmg-tls.pem"
   pmgconfig tlscert
 fi
 
@@ -467,6 +496,9 @@ chmod 0700 /var/lib/pmg/spamassassin/.razor 2>/dev/null || :
 
 echo "Syncing PMG configuration..."
 pmgconfig sync
+
+# Store applied domain only after configuration sync succeeded.
+printf '%s\n' "$PMG_FQDN" > "$DOMAIN_STATE_FILE"
 
 # Prepare ClamAV directories.
 #
