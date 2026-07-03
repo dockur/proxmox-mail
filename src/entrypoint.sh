@@ -319,16 +319,6 @@ if [[ ! -f "$keys/pmg-csrf.key" ]]; then
   chown "root:$user" "$keys/pmg-csrf.key"
 fi
 
-if [[ ! -f "$keys/pmg-api.pem" ]]; then
-  info "Generating API certificate..."
-  pmgconfig apicert
-fi
-
-if [[ ! -f "$keys/pmg-tls.pem" ]]; then
-  info "Generating SMTP TLS certificate..."
-  pmgconfig tlscert
-fi
-
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
 
@@ -382,6 +372,17 @@ configure_hostname
 # Initialize PMG configuration and database
 echo "Initializing PMG configuration..."
 pmgconfig init
+
+# Generate PMG certificates after hostname/domain configuration exists.
+if [[ ! -f "$keys/pmg-api.pem" ]]; then
+  info "Generating API certificate..."
+  pmgconfig apicert
+fi
+
+if [[ ! -f "$keys/pmg-tls.pem" ]]; then
+  info "Generating SMTP TLS certificate..."
+  pmgconfig tlscert
+fi
 
 echo "Initializing PMG database..."
 
