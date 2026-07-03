@@ -1,6 +1,6 @@
 <h1 align="center">Proxmox Mail Gateway<br />
 <div align="center">
-<a href="https://github.com/dockur/proxmox-mail/"><img src="https://github.com/dockur/proxmox-mail/raw/master/.github/logo.png" title="Logo" style="max-width:100%;" width="128" /></a>
+<a href="https://github.com/dockur/proxmox-mail/"><img src="https://github.com/dockur/proxmox/raw/master/.github/logo.png" title="Logo" style="max-width:100%;" width="128" /></a>
 </div>
 <div align="center">
 
