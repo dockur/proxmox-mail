@@ -30,6 +30,8 @@ require_cmd() {
     error "Required command not found: $1"
     exit 21
   }
+
+  return 0
 }
 
 warn_missing_optional() {
@@ -178,6 +180,8 @@ EOF
   postconf -e "myhostname = $fqdn" || :
   postconf -e "mydomain = $mail_domain" || :
   postconf -e "myorigin = \$mydomain" || :
+
+  return 0
 }
 
 detect_domain_change() {
@@ -199,6 +203,8 @@ detect_domain_change() {
       echo "Initializing domain state for '$PMG_FQDN'."
     fi
   fi
+
+  return 0
 }
 
 # Check environment
@@ -251,6 +257,8 @@ set_timezone() {
 
   ln -snf "/usr/share/zoneinfo/$zone" /etc/localtime
   echo "$zone" > /etc/timezone
+
+  return 0
 }
 
 check_localtime() {
@@ -723,6 +731,8 @@ _trap() {
   for sig; do
     trap "$func $sig" "$sig"
   done
+
+  return 0
 }
 
 cleanup() {
