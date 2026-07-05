@@ -32,6 +32,32 @@ require_cmd() {
   }
 }
 
+warn_missing_optional() {
+  local flag="$1"
+  local cmd="$2"
+  local name="$3"
+
+  if is_enabled "$flag" && ! command -v "$cmd" >/dev/null 2>&1; then
+    warn "$name=Y but $cmd is missing."
+  fi
+}
+
+ensure_dir() {
+  local dir="$1"
+  local mode="${2:-}"
+  local owner="${3:-}"
+
+  mkdir -p "$dir"
+
+  if [ -n "$mode" ]; then
+    chmod "$mode" "$dir" || :
+  fi
+
+  if [ -n "$owner" ]; then
+    chown "$owner" "$dir" || :
+  fi
+}
+
 process_alive() {
   local pid="${1:-}"
 
@@ -52,6 +78,28 @@ wait_process_alive() {
   fi
 
   return 0
+}
+
+wait_port() {
+  local pattern="$1"
+  local seconds="$2"
+  local message="$3"
+  local action="${4:-warn}"
+
+  for _ in $(seq 1 "$seconds"); do
+    if ss -ltn | grep -qE "$pattern"; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  warn "$message"
+
+  if [ "$action" = "cleanup" ]; then
+    cleanup
+  fi
+
+  return 1
 }
 
 read_pidfile() {
@@ -158,42 +206,31 @@ detect_domain_change() {
 [ ! -f "/usr/local/bin/entrypoint.sh" ] && error "Script must be run inside the container!" && exit 12
 
 # Check required binaries early.
-require_cmd openssl
-require_cmd chpasswd
-require_cmd pmgconfig
-require_cmd pmgdb
-require_cmd pg_ctlcluster
-require_cmd pg_createcluster
-require_cmd pg_dropcluster
-require_cmd pg_isready
-require_cmd psql
-require_cmd createuser
-require_cmd runuser
-require_cmd supercronic
-require_cmd pmgdaemon
-require_cmd pmgproxy
-require_cmd pmg-smtp-filter
-require_cmd pmgpolicy
+for cmd in \
+  openssl \
+  chpasswd \
+  pmgconfig \
+  pmgdb \
+  pg_ctlcluster \
+  pg_createcluster \
+  pg_dropcluster \
+  pg_isready \
+  psql \
+  createuser \
+  runuser \
+  supercronic \
+  pmgdaemon \
+  pmgproxy \
+  pmg-smtp-filter \
+  pmgpolicy; do
+  require_cmd "$cmd"
+done
 
-if is_enabled "$CLAMAV" && ! command -v clamd >/dev/null 2>&1; then
-  warn "CLAMAV=Y but clamd is missing."
-fi
-
-if is_enabled "$FRESHCLAM" && ! command -v freshclam >/dev/null 2>&1; then
-  warn "FRESHCLAM=Y but freshclam is missing."
-fi
-
-if is_enabled "$FETCHMAIL" && ! command -v fetchmail >/dev/null 2>&1; then
-  warn "FETCHMAIL=Y but fetchmail is missing."
-fi
-
-if is_enabled "$PMGTUNNEL" && ! command -v pmgtunnel >/dev/null 2>&1; then
-  warn "PMGTUNNEL=Y but pmgtunnel is missing."
-fi
-
-if is_enabled "$PMGMIRROR" && ! command -v pmgmirror >/dev/null 2>&1; then
-  warn "PMGMIRROR=Y but pmgmirror is missing."
-fi
+warn_missing_optional "$CLAMAV" clamd CLAMAV
+warn_missing_optional "$FRESHCLAM" freshclam FRESHCLAM
+warn_missing_optional "$FETCHMAIL" fetchmail FETCHMAIL
+warn_missing_optional "$PMGTUNNEL" pmgtunnel PMGTUNNEL
+warn_missing_optional "$PMGMIRROR" pmgmirror PMGMIRROR
 
 # Display version number
 info "Starting Proxmox Mail Gateway for Docker v$(</etc/version)..."
@@ -241,32 +278,12 @@ fi
 # Ensure directory permissions
 user="www-data"
 
-dir="/etc/pmg"
-mkdir -p "$dir"
-chmod 0750 "$dir" || :
-chown "root:$user" "$dir" || :
-
-dir="/etc/pmg/dkim"
-mkdir -p "$dir"
-chmod 0750 "$dir" || :
-chown "root:$user" "$dir" || :
-
-dir="/var/lib/pmg"
-mkdir -p "$dir"
-chown "root:$user" "$dir" || :
-
-dir="/var/spool/pmg"
-mkdir -p "$dir"
-chown "root:$user" "$dir" || :
-
-dir="/var/log/pmg"
-mkdir -p "$dir"
-chown "root:$user" "$dir" || :
-
-dir="/run/pmg"
-mkdir -p "$dir"
-chmod 0755 "$dir" || :
-chown "root:root" "$dir" || :
+ensure_dir "/etc/pmg" 0750 "root:$user"
+ensure_dir "/etc/pmg/dkim" 0750 "root:$user"
+ensure_dir "/var/lib/pmg" "" "root:$user"
+ensure_dir "/var/spool/pmg" "" "root:$user"
+ensure_dir "/var/log/pmg" "" "root:$user"
+ensure_dir "/run/pmg" 0755 "root:root"
 
 # Remove stale PID files.
 #
@@ -787,33 +804,11 @@ wait_process_alive "$PMGPROXY_PID" "pmgproxy" 1 || cleanup
 
 echo "Starting pmg-smtp-filter..."
 pmg-smtp-filter start
-
-for _ in $(seq 1 30); do
-  if ss -ltn | grep -qE '127\.0\.0\.1:1002[34][[:space:]]'; then
-    break
-  fi
-  sleep 1
-done
-
-if ! ss -ltn | grep -qE '127\.0\.0\.1:1002[34][[:space:]]'; then
-  warn "pmg-smtp-filter does not appear to be listening on ports 10023/10024."
-  cleanup
-fi
+wait_port '127\.0\.0\.1:1002[34][[:space:]]' 30 "pmg-smtp-filter does not appear to be listening on ports 10023/10024." cleanup
 
 echo "Starting pmgpolicy..."
 pmgpolicy start
-
-for _ in $(seq 1 30); do
-  if ss -ltn | grep -q '127.0.0.1:10022'; then
-    break
-  fi
-  sleep 1
-done
-
-if ! ss -ltn | grep -q '127.0.0.1:10022'; then
-  warn "pmgpolicy does not appear to be listening on port 10022."
-  cleanup
-fi
+wait_port '127\.0\.0\.1:10022' 30 "pmgpolicy does not appear to be listening on port 10022." cleanup
 
 PMGMIRROR_PID=""
 
@@ -847,20 +842,8 @@ fi
 echo "Checking Mail Gateway readiness..."
 
 if command -v ss >/dev/null 2>&1; then
-  for _ in $(seq 1 60); do
-    if ss -ltn | grep -q ':8006 '; then
-      break
-    fi
-    sleep 1
-  done
-
-  if ! ss -ltn | grep -q ':8006 '; then
-    warn "PMG web interface does not appear to be listening on port 8006."
-  fi
-
-  if ! ss -ltn | grep -q ':25 '; then
-    warn "Postfix does not appear to be listening on port 25."
-  fi
+  wait_port ':8006 ' 60 "PMG web interface does not appear to be listening on port 8006." warn
+  ss -ltn | grep -q ':25 ' || warn "Postfix does not appear to be listening on port 25."
 else
   warn "Cannot run readiness port checks because 'ss' is not installed."
 fi
