@@ -16,13 +16,14 @@ Proxmox Mail Gateway inside a Docker container.
 
 ## Features ✨
 
-  - **Centralized Web GUI** - Manage all incoming and outgoing email traffic from a single, intuitive interface.
-  - **Antivirus Engine** - Integrates ClamAV to detect Trojans, malware, and other malicious threats.
-  - **Spam Quarantine** - Safe, user-accessible quarantine area to hold identified spam mails, with mobile-friendly access.
-  - **Rule System & Mail Flow** - Object-Oriented Rule System: Create highly customizable rules based on senders, recipients, content, and time.
-  - **DKIM Signing** - Optionally sign outgoing emails with DKIM to ensure authenticity and improve deliverability.
-  - **Outbound Protection** - Scans outgoing emails to prevent your server from being blacklisted and maintains IP reputation.
-  - **Authentication** - Supports standard Linux PAM, single sign-on (SSO) via OpenID Connect, and Two-Factor Authentication (TOTP/WebAuthn) for secure admin access.
+- Runs Proxmox Mail Gateway inside Docker
+- Provides the familiar Proxmox Mail Gateway web interface
+- Filters incoming and outgoing email traffic
+- Includes spam and antivirus protection
+- Supports quarantine management and mail filtering rules
+- Supports DKIM signing for outgoing mail
+- Stores mail data and configuration in persistent volumes
+- Works on both AMD64 and ARM64 systems
 
 ## Usage  🐳
 
