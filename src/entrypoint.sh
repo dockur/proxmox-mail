@@ -42,6 +42,8 @@ warn_missing_optional() {
   if is_enabled "$flag" && ! command -v "$cmd" >/dev/null 2>&1; then
     warn "$name=Y but $cmd is missing."
   fi
+
+  return 0
 }
 
 ensure_dir() {
@@ -58,6 +60,8 @@ ensure_dir() {
   if [ -n "$owner" ]; then
     chown "$owner" "$dir" || :
   fi
+
+  return 0
 }
 
 process_alive() {
@@ -257,8 +261,6 @@ set_timezone() {
 
   ln -snf "/usr/share/zoneinfo/$zone" /etc/localtime
   echo "$zone" > /etc/timezone
-
-  return 0
 }
 
 check_localtime() {
@@ -736,6 +738,8 @@ _trap() {
 }
 
 cleanup() {
+  local exit_code="${1:-0}"
+
   [ -f /proxmox.end ] && return 0
   [[ "${BASHPID:-}" != "${TRAP_PID:-}" ]] && return 0
 
@@ -790,13 +794,19 @@ cleanup() {
   done
 
   echo ""
-  echo "Shutdown completed successfully."
-  exit 0
+
+  if [ "$exit_code" -eq 0 ]; then
+    echo "Shutdown completed successfully."
+  else
+    echo "Shutdown completed after an error."
+  fi
+
+  exit "$exit_code"
 }
 
 # Init trap
 rm -f /proxmox.end
-_trap cleanup SIGTERM SIGINT
+_trap "cleanup 0" SIGTERM SIGINT
 
 # Start PMG services without systemd.
 #
@@ -805,12 +815,12 @@ _trap cleanup SIGTERM SIGINT
 echo "Starting pmgdaemon..."
 pmgdaemon start --debug 1 &
 PMGDAEMON_PID=$!
-wait_process_alive "$PMGDAEMON_PID" "pmgdaemon" 1 || cleanup
+wait_process_alive "$PMGDAEMON_PID" "pmgdaemon" 1 || cleanup 1
 
 echo "Starting pmgproxy..."
 pmgproxy start --debug 1 &
 PMGPROXY_PID=$!
-wait_process_alive "$PMGPROXY_PID" "pmgproxy" 1 || cleanup
+wait_process_alive "$PMGPROXY_PID" "pmgproxy" 1 || cleanup 1
 
 echo "Starting pmg-smtp-filter..."
 pmg-smtp-filter start
