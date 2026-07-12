@@ -38,6 +38,7 @@ services:
     environment:
       PASSWORD: "root"
       DOMAIN: "pmg.example.com"
+      TZ: "America/New_York"
     ports:
       - 25:25
       - 26:26
