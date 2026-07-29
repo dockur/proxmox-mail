@@ -4,6 +4,7 @@ set -Eeuo pipefail
 # Docker environment variables
 : "${DEBUG:="N"}"            # Enable debugging
 : "${PASSWORD:="root"}"      # Default password
+: "${PASSWORD_HASH:=""}"     # Default password hash
 : "${DOMAIN:="pmg.local"}"   # FQDN for mailserver
 
 # Optional service toggles
@@ -248,7 +249,11 @@ info "For support visit https://github.com/dockur/proxmox-mail"
 echo ""
 
 # Update password for root
-printf 'root:%s\n' "$PASSWORD" | chpasswd
+if [ -n "$PASSWORD_HASH" ]; then
+  usermod -p  root <<<"$PASSWORD_HASH"
+else
+  printf 'root:%s\n' "$PASSWORD" | chpasswd
+fi
 
 # If missing timezone and localtime set them
 set_timezone() {
